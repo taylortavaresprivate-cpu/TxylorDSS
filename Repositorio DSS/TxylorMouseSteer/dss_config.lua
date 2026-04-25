@@ -89,7 +89,9 @@ cfg.TC_MIN_SPEED  = 10
 cfg.TC_MIN_GAS    = 0.51
 cfg.TC_INTENSITY  = 0.48
 cfg.TC_SMOOTH     = 3.1
-cfg.TC_NDSLIP_DIV = 2.4
+cfg.TC_NDSLIP_DIV       = 2.4
+cfg.TC_SLIP_RATIO_SCALE = 1.0
+cfg.TC_RECOVERY         = 8.0
 cfg.LAUNCH_ENABLED  = false
 cfg.LAUNCH_RPM      = 4500
 cfg.LAUNCH_CUT_TIME = 200
@@ -152,7 +154,7 @@ function cfg.applyAbsLevel()
 end
 
 local TC_LEVELS = {
-	[1]={0.200,0.92,0.04,0.4},[2]={0.155,0.85,0.08,0.6},[3]={0.120,0.78,0.14,0.9},
+	[1]={0.100,0.92,0.04,0.4},[2]={0.085,0.85,0.08,0.6},[3]={0.065,0.78,0.14,0.9},
 	[4]={0.100,0.95,0.03,1.0},[5]={0.095,0.90,0.08,1.2},[6]={0.090,0.85,0.13,1.5},
 	[7]={0.085,0.80,0.18,1.7},[8]={0.079,0.76,0.23,1.9},[9]={0.074,0.71,0.28,2.2},
 	[10]={0.069,0.66,0.33,2.4},[11]={0.064,0.61,0.38,2.6},[12]={0.058,0.56,0.43,2.9},
@@ -286,15 +288,17 @@ function cfg.loadConfig()
 	cfg.ABS_BRAKE_RECOVERY    = clamp(geti("abs_brake_recovery",    cfg.ABS_BRAKE_RECOVERY),    0, 10)
 
 	-- [TC]
-	cfg.TC_ENABLED    = getb("tc_enabled",    cfg.TC_ENABLED)
-	cfg.TC_MIN_SPEED  = getf("tc_min_speed",  cfg.TC_MIN_SPEED)
-	cfg.TC_LEVEL      = getf("tc_level",      cfg.TC_LEVEL)
-	cfg.TC_NDSLIP_DIV = getf("tc_ndslip_div", cfg.TC_NDSLIP_DIV)
+	cfg.TC_ENABLED   = getb("tc_enabled",  cfg.TC_ENABLED)
+	cfg.TC_MIN_SPEED = clamp(geti("tc_min_speed", 10), 0, 100)
+	cfg.TC_LEVEL     = geti("tc_level",    cfg.TC_LEVEL)
+	cfg.TC_NDSLIP_DIV       = clamp(geti("tc_ndslip_div",        24), 10, 50) * 0.1
+	cfg.TC_SLIP_RATIO_SCALE = clamp(geti("tc_slip_ratio_scale",   5),  0, 10) * 0.2
+	cfg.TC_RECOVERY         = clamp(geti("tc_recovery",          80),  1,150) * 0.1
 	if cfg.TC_LEVEL == 0 then
-		cfg.TC_THRESHOLD = getf("tc_threshold", cfg.TC_THRESHOLD)
-		cfg.TC_MIN_GAS   = getf("tc_min_gas",   cfg.TC_MIN_GAS)
-		cfg.TC_INTENSITY = getf("tc_intensity", cfg.TC_INTENSITY)
-		cfg.TC_SMOOTH    = getf("tc_smooth",    cfg.TC_SMOOTH)
+		cfg.TC_THRESHOLD = clamp(geti("tc_threshold", 53), 0, 100) * 0.001
+		cfg.TC_MIN_GAS   = clamp(geti("tc_min_gas",   51), 0, 100) * 0.01
+		cfg.TC_INTENSITY = clamp(geti("tc_intensity", 48), 1, 100) * 0.01
+		cfg.TC_SMOOTH    = clamp(geti("tc_smooth",    31), 1, 100) * 0.1
 	else cfg.applyTcLevel() end
 	cfg.LAUNCH_ENABLED  = getb("launch_enabled",  cfg.LAUNCH_ENABLED)
 	cfg.LAUNCH_RPM      = clamp(getf("launch_rpm",      cfg.LAUNCH_RPM),      1000, 20000)

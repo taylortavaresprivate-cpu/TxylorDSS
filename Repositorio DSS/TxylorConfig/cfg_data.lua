@@ -75,15 +75,17 @@ M.cfg = {
 	abs_trail_brake       = 0,
 	abs_trail_brake_start = 2,
 	abs_brake_recovery    = 6,
-	-- [TC]
+	-- [TC] — valores em escala UI (inteiros onde aplicável)
 	tc_enabled    = true,
 	tc_level      = 13,
-	tc_threshold  = 0.053,
-	tc_min_speed  = 10.0,
-	tc_min_gas    = 0.51,
-	tc_intensity  = 0.48,
-	tc_smooth     = 3.1,
-	tc_ndslip_div = 2.4,
+	tc_threshold  = 53,    -- UI: 0-100   (físico: ×0.001)
+	tc_min_speed  = 10,    -- UI: 0-100 km/h (1:1)
+	tc_min_gas    = 51,    -- UI: 0-100   (físico: ×0.01)
+	tc_intensity  = 48,    -- UI: 1-100   (físico: ×0.01)
+	tc_smooth     = 31,    -- UI: 1-100   (físico: ×0.1)
+	tc_ndslip_div       = 24,  -- UI: 10-50  (físico: ×0.1)
+	tc_slip_ratio_scale = 5,   -- UI: 0-10   (físico: ×0.2)
+	tc_recovery         = 80,  -- UI: 1-150  (físico: ×0.1)
 	launch_enabled  = false,
 	launch_rpm      = 4500,
 	launch_cut_time = 200,
@@ -154,15 +156,16 @@ M.TC_LEVEL_NAMES = {
 	'Médio+','Firme','Firme+','Forte','Forte+',
 	'Agressivo','Muito Forte','Extremo','Máximo','Full',
 }
+-- {tc_threshold(UI 0-100), tc_min_gas(UI 0-100), tc_intensity(UI 1-100), tc_smooth(UI 1-100)}
 M.TC_LEVEL_DATA = {
-	[1]={0.200,0.92,0.04,0.4},[2]={0.155,0.85,0.08,0.6},[3]={0.120,0.78,0.14,0.9},
-	[4]={0.100,0.95,0.03,1.0},[5]={0.095,0.90,0.08,1.2},[6]={0.090,0.85,0.13,1.5},
-	[7]={0.085,0.80,0.18,1.7},[8]={0.079,0.76,0.23,1.9},[9]={0.074,0.71,0.28,2.2},
-	[10]={0.069,0.66,0.33,2.4},[11]={0.064,0.61,0.38,2.6},[12]={0.058,0.56,0.43,2.9},
-	[13]={0.053,0.51,0.48,3.1},[14]={0.048,0.46,0.53,3.3},[15]={0.043,0.41,0.58,3.6},
-	[16]={0.037,0.37,0.63,3.8},[17]={0.032,0.32,0.68,4.0},[18]={0.027,0.27,0.73,4.3},
-	[19]={0.022,0.22,0.78,4.5},[20]={0.016,0.17,0.83,4.7},[21]={0.011,0.12,0.88,5.0},
-	[22]={0.006,0.07,0.93,5.2},[23]={0.001,0.02,0.98,5.5},
+	[1] ={100,92, 4, 4}, [2] ={ 85,85, 8, 6}, [3] ={ 65,78,14, 9},
+	[4] ={100,95, 3,10}, [5] ={ 95,90, 8,12}, [6] ={ 90,85,13,15},
+	[7] ={ 85,80,18,17}, [8] ={ 79,76,23,19}, [9] ={ 74,71,28,22},
+	[10]={ 69,66,33,24}, [11]={ 64,61,38,26}, [12]={ 58,56,43,29},
+	[13]={ 53,51,48,31}, [14]={ 48,46,53,33}, [15]={ 43,41,58,36},
+	[16]={ 37,37,63,38}, [17]={ 32,32,68,40}, [18]={ 27,27,73,43},
+	[19]={ 22,22,78,45}, [20]={ 16,17,83,47}, [21]={ 11,12,88,50},
+	[22]={  6, 7,93,52}, [23]={  1, 2,98,55},
 }
 
 -- ========================================================================
@@ -194,7 +197,7 @@ M.SAVE_KEYS = {
 	'abs_intensity','abs_smooth','abs_ndslip_div','abs_curve_factor',
 	'abs_rear_bias','abs_trail_brake','abs_trail_brake_start','abs_brake_recovery',
 	'tc_enabled','tc_level','tc_threshold','tc_min_speed',
-	'tc_min_gas','tc_intensity','tc_smooth','tc_ndslip_div',
+	'tc_min_gas','tc_intensity','tc_smooth','tc_ndslip_div','tc_slip_ratio_scale','tc_recovery',
 	'launch_enabled','launch_rpm','launch_cut_time',
 	'cruise_enabled','cruise_full_speed','cruise_gas_min','cruise_brake_min',
 	'key_clutch','key_handbrake',

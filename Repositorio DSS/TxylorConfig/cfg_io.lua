@@ -27,19 +27,19 @@ local function formatValue(key, val)
 	    or key=='nls_cut_duration' or key=='nls_min_rpm'
 	    or key=='blip_duration' then
 		return string.format("%d", val)
-	elseif key=='abs_threshold' or key=='abs_min_brake' or key=='abs_curve_factor' then
-		return string.format("%d", math.floor(val + 0.5))
-	elseif key=='abs_rear_bias' or key=='abs_trail_brake'
-	    or key=='abs_trail_brake_start' or key=='abs_brake_recovery' then
+	elseif key=='abs_threshold' or key=='abs_min_brake' or key=='abs_curve_factor'
+	    or key=='abs_rear_bias' or key=='abs_trail_brake'
+	    or key=='abs_trail_brake_start' or key=='abs_brake_recovery'
+	    or key=='tc_threshold' or key=='tc_min_gas' or key=='tc_intensity'
+	    or key=='tc_smooth' or key=='tc_ndslip_div'
+	    or key=='tc_slip_ratio_scale' or key=='tc_recovery' then
 		return string.format("%d", math.floor(val + 0.5))
 	elseif key=='steer_sensi' or key=='abs_min_speed' or key=='tc_min_speed'
-	    or key=='abs_smooth' or key=='tc_smooth'
+	    or key=='abs_smooth'
 	    or key=='speed_sensi_start' or key=='speed_sensi_end'
 	    or key=='antistall_full_speed' or key=='antistall_min_speed'
 	    or key=='cruise_full_speed' then
 		return string.format("%.1f", val)
-	elseif key=='tc_threshold' then
-		return string.format("%.4f", val)
 	else
 		return string.format("%.2f", val)
 	end
@@ -83,6 +83,17 @@ local function loadAbsInt(ini, key, default)
 	return math.floor(raw + 0.5)
 end
 
+-- Converte campos TC do formato antigo (float, ex: 0.053) para novo (inteiro, ex: 53)
+-- oldMax: máximo da escala float antiga; newMax: máximo da nova escala inteira
+local function loadTcInt(ini, key, default, oldMax, newMax)
+	local raw = tonumber(ini[key])
+	if raw == nil then return default end
+	if raw < 1 then
+		return math.floor(raw / oldMax * newMax + 0.5)
+	end
+	return math.floor(raw + 0.5)
+end
+
 function M.saveConfig()
 	data.saveOk = writeIni(CONFIG_PATH, "mousesteer", cfg)
 end
@@ -122,6 +133,20 @@ function M.loadConfig()
 			elseif key == 'abs_rear_bias' or key == 'abs_trail_brake'
 			    or key == 'abs_trail_brake_start' or key == 'abs_brake_recovery' then
 				cfg[key] = math.min(10, math.floor((tonumber(ini[key]) or cfg[key]) + 0.5))
+			elseif key == 'tc_threshold' then
+				cfg[key] = math.min(100, math.max(0, loadTcInt(ini, key, cfg[key], 0.100, 100)))
+			elseif key == 'tc_min_gas' then
+				cfg[key] = math.min(100, math.max(0, loadTcInt(ini, key, cfg[key], 1.00, 100)))
+			elseif key == 'tc_intensity' then
+				cfg[key] = math.min(100, math.max(1, loadTcInt(ini, key, cfg[key], 1.0, 100)))
+			elseif key == 'tc_smooth' then
+				cfg[key] = math.min(100, math.max(1, loadTcInt(ini, key, cfg[key], 10.0, 100)))
+			elseif key == 'tc_ndslip_div' then
+				cfg[key] = math.min(50, math.max(10, loadTcInt(ini, key, cfg[key], 5.0, 50)))
+			elseif key == 'tc_slip_ratio_scale' then
+				cfg[key] = math.min(10, math.max(0, loadTcInt(ini, key, cfg[key], 2.0, 10)))
+			elseif key == 'tc_recovery' then
+				cfg[key] = math.min(150, math.max(1, loadTcInt(ini, key, cfg[key], 15.0, 150)))
 			else
 				cfg[key] = tonumber(ini[key]) or cfg[key]
 			end
@@ -197,6 +222,20 @@ function M.loadPreset(preset)
 	for _, key in ipairs(SAVE_KEYS) do
 		if ini[key] then
 			if BOOL_KEYS[key] then cfg[key] = (ini[key]=="1" or ini[key]=="true")
+			elseif key == 'tc_threshold' then
+				cfg[key] = math.min(100, math.max(0, loadTcInt(ini, key, cfg[key], 0.100, 100)))
+			elseif key == 'tc_min_gas' then
+				cfg[key] = math.min(100, math.max(0, loadTcInt(ini, key, cfg[key], 1.00, 100)))
+			elseif key == 'tc_intensity' then
+				cfg[key] = math.min(100, math.max(1, loadTcInt(ini, key, cfg[key], 1.0, 100)))
+			elseif key == 'tc_smooth' then
+				cfg[key] = math.min(100, math.max(1, loadTcInt(ini, key, cfg[key], 10.0, 100)))
+			elseif key == 'tc_ndslip_div' then
+				cfg[key] = math.min(50, math.max(10, loadTcInt(ini, key, cfg[key], 5.0, 50)))
+			elseif key == 'tc_slip_ratio_scale' then
+				cfg[key] = math.min(10, math.max(0, loadTcInt(ini, key, cfg[key], 2.0, 10)))
+			elseif key == 'tc_recovery' then
+				cfg[key] = math.min(150, math.max(1, loadTcInt(ini, key, cfg[key], 15.0, 150)))
 			else cfg[key] = tonumber(ini[key]) or cfg[key] end
 		end
 	end

@@ -44,21 +44,36 @@ function tc.detectDrivetrain()
 	end
 end
 
-local function getNdSlip(data)
-	local ndSlipF = (data.ndSlipL  + data.ndSlipR)  / 2.6
-	local ndSlipR = (data.ndSlipRL + data.ndSlipRR) / 2.6
+local function getSlipRatioSignal()
 	if detectedDrivetrain == 0 then
-		return ndSlipF / cfg.TC_NDSLIP_DIV
+		return (math.abs(car.wheels[0].slipRatio) + math.abs(car.wheels[1].slipRatio)) / 2
 	elseif detectedDrivetrain == 1 then
-		return ndSlipR / cfg.TC_NDSLIP_DIV
+		return (math.abs(car.wheels[2].slipRatio) + math.abs(car.wheels[3].slipRatio)) / 2
 	else
-		return ((ndSlipF * 0.3) + (ndSlipR * 0.7)) / cfg.TC_NDSLIP_DIV
+		return (math.abs(car.wheels[0].slipRatio) + math.abs(car.wheels[1].slipRatio) +
+		        math.abs(car.wheels[2].slipRatio) + math.abs(car.wheels[3].slipRatio)) / 4
 	end
 end
 
+local function getNdSlip(data)
+	local ndSlipF = (data.ndSlipL  + data.ndSlipR)  / 2.6
+	local ndSlipR = (data.ndSlipRL + data.ndSlipRR) / 2.6
+	local ndSig
+	if detectedDrivetrain == 0 then
+		ndSig = ndSlipF / cfg.TC_NDSLIP_DIV
+	elseif detectedDrivetrain == 1 then
+		ndSig = ndSlipR / cfg.TC_NDSLIP_DIV
+	else
+		ndSig = ((ndSlipF * 0.3) + (ndSlipR * 0.7)) / cfg.TC_NDSLIP_DIV
+	end
+	local srSig = getSlipRatioSignal() * cfg.TC_SLIP_RATIO_SCALE
+	return math.max(ndSig, srSig)
+end
+
 function tc.update(dt, data, gasValue)
+	local slip = 0.0
 	if cfg.TC_ENABLED and car.speedKmh > cfg.TC_MIN_SPEED then
-		local slip = getNdSlip(data)
+		slip = getNdSlip(data)
 		local tcTarget
 		if slip > cfg.TC_THRESHOLD then
 			local excess = (slip - cfg.TC_THRESHOLD) / (1.0 - cfg.TC_THRESHOLD)
@@ -66,10 +81,14 @@ function tc.update(dt, data, gasValue)
 		else
 			tcTarget = 1.0
 		end
-		tcMultiplier = pedals.approach(tcMultiplier, tcTarget, cfg.TC_SMOOTH, dt)
+		local speed = tcMultiplier > tcTarget and cfg.TC_SMOOTH or cfg.TC_RECOVERY
+		tcMultiplier = pedals.approach(tcMultiplier, tcTarget, speed, dt)
 	else
-		tcMultiplier = pedals.approach(tcMultiplier, 1.0, cfg.TC_SMOOTH, dt)
+		tcMultiplier = pedals.approach(tcMultiplier, 1.0, cfg.TC_RECOVERY, dt)
 	end
+	ac.store("dss_tc_mult",       tcMultiplier)
+	ac.store("dss_tc_slip",       slip)
+	ac.store("dss_tc_drivetrain", detectedDrivetrain)
 	return gasValue * tcMultiplier
 end
 

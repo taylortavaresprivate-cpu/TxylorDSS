@@ -71,4 +71,5 @@ function windowMain(dt)
 
 	-- Overlays
 	tabDirecao.drawGraphs(dt)
+	tabTC.drawGraphs(dt)
 end
