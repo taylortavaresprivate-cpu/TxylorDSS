@@ -110,6 +110,8 @@ M.cfg = {
 	key_toggle_launch     = 0,
 	key_toggle_cruise     = 0,
 	key_toggle_autoclutch = 0,
+	key_ffb_gain_up       = 0,
+	key_ffb_gain_down     = 0,
 	-- [UI]
 	ui_header_r = 0.9,  ui_header_g = 0.15, ui_header_b = 0.15,
 	ui_accent_r = 1.0,  ui_accent_g = 0.3,  ui_accent_b = 0.3,
@@ -199,6 +201,7 @@ M.SAVE_KEYS = {
 	'key_clutch','key_handbrake',
 	'key_toggle_abs','key_toggle_tc','key_toggle_launch',
 	'key_toggle_cruise','key_toggle_autoclutch',
+	'key_ffb_gain_up','key_ffb_gain_down',
 	'ui_header_r','ui_header_g','ui_header_b',
 	'ui_accent_r','ui_accent_g','ui_accent_b',
 	'ui_hint_r','ui_hint_g','ui_hint_b',

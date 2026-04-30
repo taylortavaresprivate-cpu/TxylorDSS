@@ -42,18 +42,7 @@ function script.update(dt)
 	end
 	wasToggleDown = toggleDown
 
-	local ffbUpDown   = ac.isKeyDown(ac.KeyIndex.OemPlus)  and not wasFFBUp
-	local ffbDownDown = ac.isKeyDown(ac.KeyIndex.OemMinus) and not wasFFBDown
-	if ffbUpDown then
-		cfg.FFB_GAIN = math.min(cfg.FFB_GAIN + 0.1, 10.0)
-		ac.setSystemMessage('FFB Gain: '..string.format("%.1f", cfg.FFB_GAIN), 'Pressione - para diminuir')
-	end
-	if ffbDownDown then
-		cfg.FFB_GAIN = math.max(cfg.FFB_GAIN - 0.1, 0.0)
-		ac.setSystemMessage('FFB Gain: '..string.format("%.1f", cfg.FFB_GAIN), 'Pressione = para aumentar')
-	end
-	wasFFBUp   = ac.isKeyDown(ac.KeyIndex.OemPlus)
-	wasFFBDown = ac.isKeyDown(ac.KeyIndex.OemMinus)
+	-- FFB Gain +/- agora via keybinds configuráveis (dss_keybinds.lua)
 
 	local keyboardToggleDown = ac.isKeyDown(ac.KeyIndex.M)
 	if keyboardToggleDown and not wasKeyboardToggleDown then

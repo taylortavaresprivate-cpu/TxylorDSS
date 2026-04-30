@@ -35,6 +35,16 @@ function M.update(dt)
 	if justPressed(cfg.KEY_TOGGLE_AUTOCLUTCH) then
 		cfg.AUTOCLUTCH_ENABLED = not cfg.AUTOCLUTCH_ENABLED
 	end
+
+	-- FFB Gain ajustável em tempo real
+	if justPressed(cfg.KEY_FFB_GAIN_UP) then
+		cfg.FFB_GAIN = math.min(cfg.FFB_GAIN + 0.1, 10.0)
+		ac.setSystemMessage('FFB Gain: '..string.format("%.1f", cfg.FFB_GAIN), 'Pressione a tecla de diminuir para reduzir')
+	end
+	if justPressed(cfg.KEY_FFB_GAIN_DOWN) then
+		cfg.FFB_GAIN = math.max(cfg.FFB_GAIN - 0.1, 0.0)
+		ac.setSystemMessage('FFB Gain: '..string.format("%.1f", cfg.FFB_GAIN), 'Pressione a tecla de aumentar para subir')
+	end
 end
 
 return M

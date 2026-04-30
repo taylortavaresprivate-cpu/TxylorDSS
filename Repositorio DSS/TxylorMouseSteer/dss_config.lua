@@ -114,6 +114,8 @@ cfg.KEY_TOGGLE_TC         = 0
 cfg.KEY_TOGGLE_LAUNCH     = 0
 cfg.KEY_TOGGLE_CRUISE     = 0
 cfg.KEY_TOGGLE_AUTOCLUTCH = 0
+cfg.KEY_FFB_GAIN_UP       = 0
+cfg.KEY_FFB_GAIN_DOWN     = 0
 
 -- ========================================================================
 -- TABELAS DE NÍVEIS
@@ -318,6 +320,8 @@ function cfg.loadConfig()
 	cfg.KEY_TOGGLE_LAUNCH     = geti("key_toggle_launch",     cfg.KEY_TOGGLE_LAUNCH)
 	cfg.KEY_TOGGLE_CRUISE     = geti("key_toggle_cruise",     cfg.KEY_TOGGLE_CRUISE)
 	cfg.KEY_TOGGLE_AUTOCLUTCH = geti("key_toggle_autoclutch", cfg.KEY_TOGGLE_AUTOCLUTCH)
+	cfg.KEY_FFB_GAIN_UP       = geti("key_ffb_gain_up",       cfg.KEY_FFB_GAIN_UP)
+	cfg.KEY_FFB_GAIN_DOWN     = geti("key_ffb_gain_down",     cfg.KEY_FFB_GAIN_DOWN)
 end
 
 cfg.loadConfig()

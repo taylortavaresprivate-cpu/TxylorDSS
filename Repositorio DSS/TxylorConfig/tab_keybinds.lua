@@ -78,6 +78,14 @@ local SECTIONS = {
 			{ label = 'Toggle AutoClutch',  key = 'key_toggle_autoclutch', hint = 'Liga/desliga o AutoClutch.' },
 		},
 	},
+	{
+		title = 'DIREÇÃO',
+		hint  = 'Ajustes rápidos de FFB durante a pilotagem.',
+		actions = {
+			{ label = 'FFB Gain +', key = 'key_ffb_gain_up',   hint = 'Aumenta o FFB Gain em 0.1' },
+			{ label = 'FFB Gain -', key = 'key_ffb_gain_down', hint = 'Diminui o FFB Gain em 0.1' },
+		},
+	},
 }
 
 -- ========================================================================
