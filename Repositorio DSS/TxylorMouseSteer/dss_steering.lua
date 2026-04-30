@@ -13,6 +13,7 @@ steering.steerVelocity = 0
 
 local filteredSteer  = 0
 local prevSteerAngle = 0
+local smoothedFfb    = 0  -- FFB Smooth: filtro passa-baixa no sinal FFB bruto
 
 function steering.update(dt, data, ui)
 	local tyreSpeed0 = car.wheels[0].angularSpeed * car.wheels[0].tyreRadius
@@ -55,20 +56,34 @@ function steering.update(dt, data, ui)
 			/ (math.pi / 2) * isDrive * isForward
 		local effVelocityAngle = math.clamp(velocityAngle, -cfg.STEER_COUNTER_STEER, cfg.STEER_COUNTER_STEER)
 
-		local rawFfb   = data.ffb * cfg.FFB_GAIN
-		local ffbSign  = rawFfb >= 0 and 1 or -1
-		local ffbForce = ffbSign * math.pow(math.abs(rawFfb) + 1e-9, cfg.FFB_GAMMA)
+		-- FFB Smooth: filtro passa-baixa no sinal bruto
+		local rawFfb = data.ffb * cfg.FFB_GAIN
+		if cfg.FFB_SMOOTH > 0 then
+			smoothedFfb = smoothedFfb * cfg.FFB_SMOOTH + rawFfb * (1.0 - cfg.FFB_SMOOTH)
+		else
+			smoothedFfb = rawFfb
+		end
+
+		local ffbSign  = smoothedFfb >= 0 and 1 or -1
+		local ffbForce = ffbSign * math.pow(math.abs(smoothedFfb) + 1e-9, cfg.FFB_GAMMA)
 
 		local totalSpeed   = math.max(math.sqrt(car.localVelocity.x^2 + car.localVelocity.z^2), 0.1)
 		local lateralForce = (car.localVelocity.x / totalSpeed) * cfg.FFB_LATERAL * isDrive * isForward
 
 		local damperForce = steerRate * cfg.FFB_DAMPER
 
+		-- Center Spring: força que puxa o volante pro centro
+		local centerSpringForce = 0
+		if cfg.CENTER_SPRING_ENABLED then
+			centerSpringForce = -steering.steerAngle * cfg.CENTER_SPRING_GAIN
+		end
+
 		steering.steerVelocity = (mouseSteer - effVelocityAngle - steering.steerAngle) * effSensi
 			- ffbForce
 			+ data.localAngularVelocity.y * cfg.GYRO_GAIN * isForward
 			- lateralForce
 			- damperForce
+			+ centerSpringForce
 	else
 		steering.steerVelocity = (mouseSteer - steering.steerAngle) * effSensi
 	end
