@@ -342,9 +342,6 @@ function M.draw()
 		u.cfgSlider('FFB Lateral', 'ffb_lateral', 0.0, 10.0, '%.1f',
 			'Força G lateral nas curvas.\n0.0 = desativado | 1.5 = padrão | 10.0 = intenso')
 		u.hint('Força lateral nas curvas.')
-		u.cfgSlider('FFB Smooth', 'ffb_smooth', 0.0, 10.0, '%.1f',
-			'Suavização do sinal FFB bruto.\n0.0 = sem suavização | 5.0 = moderado | 8.0+ = muito suave')
-		u.hint('Suaviza oscilações rápidas no FFB sem afetar a resposta do steering.')
 		gammaSlider('FFB Gamma', 'ffb_gamma',
 			'Curva de resposta do FFB.\n5.0 = linear | >5.0 = suave no centro | <5.0 = agressivo')
 		u.hint('Curva de resposta do FFB.')
@@ -378,15 +375,6 @@ function M.draw()
 	u.cfgSlider('Reversal Limit', 'steer_reversal_limit', 0.5, 10.0, '%.1f',
 		'Limita a velocidade de inversão do volante.\n0.5 = volante muito solto | 2.5 = padrão | 10.0 = bem firme')
 	u.hint('Velocidade máxima de inversão do volante.')
-
-	u.header('MOLA DE CENTRO')
-	u.cfgCheckbox('Center Spring', 'center_spring_enabled')
-	if cfg.center_spring_enabled then
-		ui.offsetCursorY(4)
-		u.cfgSlider('Spring Gain', 'center_spring_gain', 0.0, 10.0, '%.1f',
-			'Força que puxa o volante pro centro.\n0.0 = sem força | 5.0 = moderada | 10.0 = forte')
-		u.hint('Força de retorno ao centro — útil quando FFB está fraco ou desligado.')
-	end
 
 	u.header('SENSIBILIDADE POR VELOCIDADE')
 	u.cfgSlider('Steer Speed Scale', 'speed_sensi', 0.0, 10.0, '%.1f',
