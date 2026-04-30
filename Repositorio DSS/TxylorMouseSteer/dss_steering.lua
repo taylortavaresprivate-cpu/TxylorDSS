@@ -13,6 +13,7 @@ steering.steerVelocity = 0
 
 local filteredSteer  = 0
 local prevSteerAngle = 0
+local roadFeelSmoothed = 0
 
 function steering.update(dt, data, ui)
 	local tyreSpeed0 = car.wheels[0].angularSpeed * car.wheels[0].tyreRadius
@@ -64,11 +65,34 @@ function steering.update(dt, data, ui)
 
 		local damperForce = steerRate * cfg.FFB_DAMPER
 
+		-- Road Feel: vibração da textura da pista
+		local roadFeelForce = 0
+		if cfg.ROAD_FEEL_ENABLED then
+			local w0 = car.wheels[0]
+			local w1 = car.wheels[1]
+			local w2 = car.wheels[2]
+			local w3 = car.wheels[3]
+			local frontVib = (
+				(w0.suspensionTravel or 0) * (w0.angularSpeed or 0) +
+				(w1.suspensionTravel or 0) * (w1.angularSpeed or 0)
+			) * cfg.ROAD_FEEL_FRONT
+			local rearVib = (
+				(w2.suspensionTravel or 0) * (w2.angularSpeed or 0) +
+				(w3.suspensionTravel or 0) * (w3.angularSpeed or 0)
+			) * cfg.ROAD_FEEL_REAR
+			local rawRoadFeel = (frontVib + rearVib) * cfg.ROAD_FEEL_GAIN * isDrive
+			-- Suavização leve (filtro passa-baixa ~20Hz)
+			roadFeelSmoothed = roadFeelSmoothed * 0.7 + rawRoadFeel * 0.3
+			-- Limita a vibração para não dominar o FFB
+			roadFeelForce = math.clamp(roadFeelSmoothed, -0.5, 0.5)
+		end
+
 		steering.steerVelocity = (mouseSteer - effVelocityAngle - steering.steerAngle) * effSensi
 			- ffbForce
 			+ data.localAngularVelocity.y * cfg.GYRO_GAIN * isForward
 			- lateralForce
 			- damperForce
+			+ roadFeelForce
 	else
 		steering.steerVelocity = (mouseSteer - steering.steerAngle) * effSensi
 	end

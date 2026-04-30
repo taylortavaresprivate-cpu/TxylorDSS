@@ -17,6 +17,10 @@ M.cfg = {
 	ffb_lateral         = 1.5,
 	steer_deadzone      = 0.0,
 	steer_reversal_limit = 2.5,
+	road_feel_enabled   = false,
+	road_feel_gain      = 5.0,
+	road_feel_front     = 7.0,
+	road_feel_rear      = 3.0,
 	speed_sensi         = 1.0,
 	speed_sensi_start   = 80.0,
 	speed_sensi_end     = 250.0,
@@ -173,6 +177,7 @@ M.SAVE_KEYS = {
 	'ffb_enabled','ffb_gain','steer_sensi','gyro_gain',
 	'steer_limit','steer_gamma','steer_filter','steer_counter_steer',
 	'ffb_damper','ffb_lateral','steer_deadzone','steer_reversal_limit',
+	'road_feel_enabled','road_feel_gain','road_feel_front','road_feel_rear',
 	'speed_sensi','speed_sensi_start','speed_sensi_end',
 	'gas_press','gas_release','gas_max',
 	'brake_press','brake_release','brake_max',
@@ -217,6 +222,7 @@ M.BOOL_KEYS = {
 	cruise_enabled=true, scroll_gas_enabled=true,
 	scroll_gas_reset_on_brake=true, scroll_gas_invert=true,
 	scroll_gas_gradual=true,
+	road_feel_enabled=true,
 }
 
 return M

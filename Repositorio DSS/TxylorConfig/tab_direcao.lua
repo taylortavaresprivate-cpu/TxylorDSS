@@ -386,6 +386,21 @@ function M.draw()
 		u.cfgSlider('Vel. máxima', 'speed_sensi_end', 100.0, 350.0, '%.0f km/h',
 			'Velocidade onde a redução atinge o mínimo.')
 	end
+
+	u.header('ROAD FEEL')
+	u.cfgCheckbox('Road Feel', 'road_feel_enabled')
+	if cfg.road_feel_enabled then
+		ui.offsetCursorY(4)
+		u.cfgSlider('Gain', 'road_feel_gain', 0.0, 10.0, '%.1f',
+			'Intensidade geral da vibração.\n0.0 = sem efeito | 5.0 = padrão | 10.0 = máximo')
+		u.hint('Intensidade geral da vibração de pista.')
+		u.cfgSlider('Front', 'road_feel_front', 0.0, 10.0, '%.1f',
+			'Contribuição das rodas dianteiras.\n0.0 = sem efeito | 7.0 = padrão | 10.0 = máximo')
+		u.hint('Vibração das rodas dianteiras.')
+		u.cfgSlider('Rear', 'road_feel_rear', 0.0, 10.0, '%.1f',
+			'Contribuição das rodas traseiras.\n0.0 = sem efeito | 3.0 = padrão | 10.0 = máximo')
+		u.hint('Vibração das rodas traseiras.')
+	end
 end
 
 return M
