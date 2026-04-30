@@ -112,6 +112,12 @@ for i = 1, HISTORY_LEN do histMouse[i] = 0; histSteer[i] = 0 end
 local histHead     = 1
 local monitorTimer = 0
 
+-- Clipping state
+local CLIP_DURATION  = 0.15
+local CLIP_THRESHOLD = 0.98
+local clipTimers     = { mouse = 0, steer = 0, ffb = 0 }
+local COL_CLIP       = rgbm(0.95, 0.05, 0.05, 1)
+
 local function pushHistory(mouse, steer)
 	histMouse[histHead] = mouse
 	histSteer[histHead] = steer
@@ -167,20 +173,22 @@ local function drawMonitor(dt)
 	local barW   = W - barPad * 2
 	local cx     = barPad + barW / 2
 
-	local function drawBar(y, value, col, label, disabled)
+	local function drawBar(y, value, col, label, disabled, isClipping)
+		local drawCol = isClipping and COL_CLIP or col
 		ui.drawRectFilled(vec2(barPad, y), vec2(barPad + barW, y + barH), COL_TRACK, 2)
 		ui.drawLine(vec2(cx, y - 2), vec2(cx, y + barH + 2), COL_ZERO, 1)
 		if not disabled then
 			local fillX = cx + value * (barW / 2)
 			if value >= 0 then
-				ui.drawRectFilled(vec2(cx, y + 2), vec2(fillX, y + barH - 2), col, 1)
+				ui.drawRectFilled(vec2(cx, y + 2), vec2(fillX, y + barH - 2), drawCol, 1)
 			else
-				ui.drawRectFilled(vec2(fillX, y + 2), vec2(cx, y + barH - 2), col, 1)
+				ui.drawRectFilled(vec2(fillX, y + 2), vec2(cx, y + barH - 2), drawCol, 1)
 			end
-			ui.drawLine(vec2(fillX, y), vec2(fillX, y + barH), rgbm(1, 1, 1, 0.9), 2)
+			local lineCol = isClipping and COL_CLIP or rgbm(1, 1, 1, 0.9)
+			ui.drawLine(vec2(fillX, y), vec2(fillX, y + barH), lineCol, 2)
 		end
 		ui.setCursor(vec2(barPad, y - 14))
-		ui.pushStyleColor(ui.StyleColor.Text, disabled and COL_LABEL or col)
+		ui.pushStyleColor(ui.StyleColor.Text, disabled and COL_LABEL or drawCol)
 		ui.text(label)
 		ui.popStyleColor()
 		ui.sameLine(0, 4)
@@ -189,11 +197,21 @@ local function drawMonitor(dt)
 		ui.popStyleColor()
 	end
 
+	-- Detecta clipping (quando valor atinge ≥ 98% do range)
+	if isLive and math.abs(mouseVal) >= CLIP_THRESHOLD then clipTimers.mouse = CLIP_DURATION end
+	if math.abs(steerVal) >= CLIP_THRESHOLD then clipTimers.steer = CLIP_DURATION end
+	if math.abs(ffbVal)   >= CLIP_THRESHOLD then clipTimers.ffb   = CLIP_DURATION end
+
+	-- Decai timers
+	clipTimers.mouse = math.max(0, clipTimers.mouse - dt)
+	clipTimers.steer = math.max(0, clipTimers.steer - dt)
+	clipTimers.ffb   = math.max(0, clipTimers.ffb   - dt)
+
 	-- Mouse: N/A em replay (dss_steering não roda)
-	drawBar(barY0,      mouseVal, COL_MOUSE, 'Mouse', not isLive)
+	drawBar(barY0,      mouseVal, COL_MOUSE, 'Mouse', not isLive, clipTimers.mouse > 0)
 	-- Steer e FFB: sempre disponíveis via ac.getCar(0)
-	drawBar(barY0 + 32, steerVal, COL_STEER, 'Steer', false)
-	drawBar(barY0 + 64, ffbVal,   COL_FFB,   'FFB  ', false)
+	drawBar(barY0 + 32, steerVal, COL_STEER, 'Steer', false,      clipTimers.steer > 0)
+	drawBar(barY0 + 64, ffbVal,   COL_FFB,   'FFB  ', false,      clipTimers.ffb   > 0)
 
 	-- ── GRÁFICO DE LINHA (histórico) ─────────────────────────
 	local gx  = barPad
