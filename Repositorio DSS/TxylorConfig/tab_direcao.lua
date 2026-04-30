@@ -387,19 +387,59 @@ function M.draw()
 			'Velocidade onde a redução atinge o mínimo.')
 	end
 
-	u.header('ROAD FEEL')
-	u.cfgCheckbox('Road Feel', 'road_feel_enabled')
-	if cfg.road_feel_enabled then
-		ui.offsetCursorY(4)
-		u.cfgSlider('Gain', 'road_feel_gain', 0.0, 10.0, '%.1f',
-			'Intensidade geral da vibração.\n0.0 = sem efeito | 5.0 = padrão | 10.0 = máximo')
-		u.hint('Intensidade geral da vibração de pista.')
-		u.cfgSlider('Front', 'road_feel_front', 0.0, 10.0, '%.1f',
-			'Contribuição das rodas dianteiras.\n0.0 = sem efeito | 7.0 = padrão | 10.0 = máximo')
-		u.hint('Vibração das rodas dianteiras.')
-		u.cfgSlider('Rear', 'road_feel_rear', 0.0, 10.0, '%.1f',
-			'Contribuição das rodas traseiras.\n0.0 = sem efeito | 3.0 = padrão | 10.0 = máximo')
-		u.hint('Vibração das rodas traseiras.')
+	-- =====================================================================
+	-- PRESETS DE DIREÇÃO
+	-- =====================================================================
+	ui.offsetCursorY(8)
+	u.header('PRESETS')
+
+	local PRESETS = {
+		{ name = 'Drift',   emoji = '💨', hint = 'Sensi alta, counter-steer forte, FFB gain médio' },
+		{ name = 'Touge',   emoji = '🏔️', hint = 'Sensi média-alta, FFB firme, resposta rápida' },
+		{ name = 'Circuito',emoji = '🏁', hint = 'Setup balanceado para pistas de corrida' },
+		{ name = 'Rally',   emoji = '🌲', hint = 'Sensi alta, FFB forte, filtro baixo' },
+		{ name = 'Formula', emoji = '🏎️', hint = 'Sensi baixa, FFB preciso, limit alto' },
+		{ name = 'Kart',    emoji = '🏎',  hint = 'Sensi alta, limit baixo, resposta instantânea' },
+	}
+
+	-- Tabela de valores para cada preset (valores em escala UI)
+	local PRESET_VALUES = {
+		-- {ffb_gain, steer_sensi, gyro_gain, steer_counter_steer, ffb_damper, ffb_lateral, steer_limit, steer_gamma, steer_filter, steer_deadzone, steer_reversal_limit, speed_sensi}
+		Drift    = {0.6, 7.0, 6.0, 8.0, 3.0, 2.0, 10.0, 5.0, 0.0, 0.0, 3.0, 10.0},
+		Touge    = {0.8, 5.5, 5.0, 5.0, 4.0, 2.5, 8.0,  5.0, 1.0, 0.0, 2.5, 8.0},
+		Circuito = {0.8, 4.5, 4.0, 2.0, 5.0, 3.0, 10.0, 5.0, 2.0, 0.0, 2.5, 10.0},
+		Rally    = {1.0, 6.5, 7.0, 3.0, 2.0, 4.0, 10.0, 6.0, 0.0, 0.0, 3.0, 6.0},
+		Formula  = {1.2, 3.0, 3.0, 1.0, 6.0, 4.0, 10.0, 4.0, 3.0, 0.0, 4.0, 10.0},
+		Kart     = {0.9, 8.0, 4.0, 6.0, 2.0, 2.0, 5.0,  7.0, 0.0, 0.0, 5.0, 10.0},
+	}
+
+	local btnW = math.floor((u.getWindowWidth() - 32) / 3)
+	local keys = {'ffb_gain','steer_sensi','gyro_gain','steer_counter_steer','ffb_damper','ffb_lateral','steer_limit','steer_gamma','steer_filter','steer_deadzone','steer_reversal_limit','speed_sensi'}
+
+	for i, preset in ipairs(PRESETS) do
+		if i % 3 == 1 and i > 1 then ui.newLine() end
+		if i % 3 ~= 1 then ui.sameLine(0, 4) end
+
+		if ui.button(preset.emoji..' '..preset.name..'##preset_'..preset.name, vec2(btnW, 28)) then
+			local v = PRESET_VALUES[preset.name]
+			if v then
+				cfg.ffb_gain            = v[1]
+				cfg.steer_sensi         = v[2]
+				cfg.gyro_gain           = v[3]
+				cfg.steer_counter_steer = v[4]
+				cfg.ffb_damper          = v[5]
+				cfg.ffb_lateral         = v[6]
+				cfg.steer_limit         = v[7]
+				cfg.steer_gamma         = v[8]
+				cfg.steer_filter        = v[9]
+				cfg.steer_deadzone      = v[10]
+				cfg.steer_reversal_limit = v[11]
+				cfg.speed_sensi         = v[12]
+				data.dirty = true
+				ac.setSystemMessage('Preset: '..preset.name, preset.hint)
+			end
+		end
+		if ui.itemHovered() then ui.setTooltip(preset.hint) end
 	end
 end
 
