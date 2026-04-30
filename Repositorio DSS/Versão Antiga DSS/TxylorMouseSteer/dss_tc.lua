@@ -2,7 +2,6 @@
 -- DSS TRACTION CONTROL MODULE
 -- ========================================================================
 -- TC + detecção automática de tração (FWD/RWD/AWD)
--- + progressivo por marcha + fator de curva
 -- ========================================================================
 
 local cfg    = require "dss_config"
@@ -13,16 +12,6 @@ local tc = {}
 local detectedDrivetrain = 1
 local drivetrainDetected = false
 local tcMultiplier       = 1.0
-
--- Multiplicadores de threshold por marcha (quanto maior a marcha, mais permissivo)
-local GEAR_MULT = {
-	[0] = 1.0,  -- neutro
-	[1] = 1.0,  [2] = 1.0,
-	[3] = 1.2,
-	[4] = 1.4,
-	[5] = 1.6,
-	[6] = 1.8,  [7] = 1.8,  [8] = 1.8,
-}
 
 function tc.detectDrivetrain()
 	if drivetrainDetected then return end
@@ -67,50 +56,20 @@ local function getNdSlip(data)
 	end
 end
 
--- Aplica multiplicador por marcha e fator de curva ao threshold
-local function getEffectiveThreshold(steerAngle)
-	local base = cfg.TC_THRESHOLD
-
-	-- Progressivo por marcha
-	local gear = car.gear or 1
-	local gMult = GEAR_MULT[gear] or 1.8
-	base = base * gMult
-
-	-- Fator de curva: relaxa threshold proporcional ao esterço
-	local steerAbs = math.min(math.abs(steerAngle or 0), 1.0)
-	local curveMult = 1.0 + steerAbs * cfg.TC_CURVE_FACTOR
-	base = base * curveMult
-
-	-- Clamp para não extrapolar
-	if base >= 1.0 then base = 0.999 end
-	return base
-end
-
-function tc.update(dt, data, gasValue, steerAngle)
-	local slip         = 0.0
-	local effThreshold = cfg.TC_THRESHOLD
-	local tcTarget
-
+function tc.update(dt, data, gasValue)
 	if cfg.TC_ENABLED and car.speedKmh > cfg.TC_MIN_SPEED then
-		slip = getNdSlip(data)
-		effThreshold = getEffectiveThreshold(steerAngle)
-		if slip > effThreshold then
-			local excess = (slip - effThreshold) / (1.0 - effThreshold)
+		local slip = getNdSlip(data)
+		local tcTarget
+		if slip > cfg.TC_THRESHOLD then
+			local excess = (slip - cfg.TC_THRESHOLD) / (1.0 - cfg.TC_THRESHOLD)
 			tcTarget = math.max(cfg.TC_MIN_GAS, 1.0 - excess * cfg.TC_INTENSITY)
 		else
 			tcTarget = 1.0
 		end
-		local speed = tcMultiplier > tcTarget and cfg.TC_SMOOTH or cfg.TC_SMOOTH * 0.5
-		tcMultiplier = pedals.approach(tcMultiplier, tcTarget, speed, dt)
+		tcMultiplier = pedals.approach(tcMultiplier, tcTarget, cfg.TC_SMOOTH, dt)
 	else
-		tcMultiplier = pedals.approach(tcMultiplier, 1.0, cfg.TC_SMOOTH * 0.5, dt)
+		tcMultiplier = pedals.approach(tcMultiplier, 1.0, cfg.TC_SMOOTH, dt)
 	end
-
-	-- Stores para o monitor inline
-	ac.store("dss_tc_mult",       tcMultiplier)
-	ac.store("dss_tc_slip",       slip)
-	ac.store("dss_tc_threshold",  effThreshold)
-
 	return gasValue * tcMultiplier
 end
 

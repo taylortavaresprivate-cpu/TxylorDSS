@@ -8,7 +8,6 @@ local launch   = require "dss_launch"
 local blip     = require "dss_blip"
 local nls      = require "dss_nls"
 local cruise   = require "dss_cruise"
-local keybinds = require "dss_keybinds"
 
 local mouseEnabled          = true
 local keyboardMode          = 0
@@ -29,9 +28,6 @@ function script.update(dt)
 		configTimer = 0
 		cfg.loadConfig()
 	end
-
-	-- Toggles via keybinds configuráveis (ABS, TC, Launch, Cruise, AutoClutch)
-	keybinds.update(dt)
 
 	local toggleDown = ac.isKeyDown(ac.KeyIndex.N)
 	if toggleDown and not wasToggleDown then
@@ -73,16 +69,20 @@ function script.update(dt)
 		(keyboardMode == 2 and (ac.isKeyDown(1) or ac.isKeyDown(ac.KeyIndex.W)))
 	) and 1 or 0
 
-	-- Passa o ui para o updateGas ter acesso ao mouseWheel
-	pedals.updateGas(dt, gasTarget, ui)
-
-	-- ── PROCESSAMENTO DE GAS (ordem importa!) ─────────────
+	pedals.updateGas(dt, gasTarget)
+	
+	-- ── PROCESSAMENTO DE GAS (ordem importa!) ────────────────────────
 	local currentGear = car.gear
-
+	
+	-- 1. NO-LIFT SHIFT (corta throttle ao passar marcha para cima)
 	pedals.gasValue = nls.update(dt, data, currentGear, pedals.gasValue)
+	
+	-- 2. AUTO-BLIP (adiciona throttle ao reduzir marcha)
 	pedals.gasValue = blip.update(dt, data, currentGear, pedals.gasValue)
-	pedals.gasValue = tc.update(dt, data, pedals.gasValue, steering.steerAngle)
-
+	
+	-- 3. TRACTION CONTROL (reduz throttle se derrapar)
+	pedals.gasValue = tc.update(dt, data, pedals.gasValue)
+	
 	data.gas = pedals.gasValue
 
 	launch.update(dt, data)
@@ -97,6 +97,7 @@ function script.update(dt)
 	pedals.brakeValue = abs.update(dt, data, pedals.brakeValue, steering.steerAngle)
 	data.brake = pedals.brakeValue
 
+	-- 4. CRUISE MODE (limita gas e brake em baixa velocidade)
 	cruise.update(dt, data)
 
 	local gearUpPressed   = ac.isKeyDown(ac.KeyIndex.E) or ac.isKeyDown(6)
@@ -104,12 +105,10 @@ function script.update(dt)
 	data.gearUp   = gearUpPressed   and 1 or 0
 	data.gearDown = gearDownPressed and 1 or 0
 
-	-- Embreagem manual via tecla configurável (padrão: C)
-	local manualPressed = cfg.KEY_CLUTCH > 0 and ac.isKeyDown(cfg.KEY_CLUTCH) or false
+	local manualPressed = ac.isKeyDown(ac.KeyIndex.C)
 	data.clutch = clutchM.update(dt, data, manualPressed, currentGear, pedals.gasValue)
 
-	-- Freio de mão via tecla configurável (padrão: Space)
-	local handbrakeTarget = (cfg.KEY_HANDBRAKE > 0 and ac.isKeyDown(cfg.KEY_HANDBRAKE)) and 1 or 0
+	local handbrakeTarget = ac.isKeyDown(ac.KeyIndex.Space) and 1 or 0
 	pedals.updateHandbrake(dt, handbrakeTarget)
 	data.handbrake = pedals.handbrakeValue
 

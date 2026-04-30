@@ -342,6 +342,10 @@ function M.draw()
 		'Limita a rotação máxima do volante.\n10.0 = 900° | 5.0 = 450° | 3.0 = 270°')
 	local deg = math.floor(cfg.steer_limit * 90 + 0.5)
 	u.hint('Rotação máxima: '..deg..'°')
+	u.cfgSlider('Steer Deadzone', 'steer_deadzone', 0.0, 10.0, '%.1f',
+		'Zona morta no centro do mouse.\n0.0 = sem deadzone | 3.3 = ~10% | 10.0 = ~30%')
+	local dzPct = math.floor(cfg.steer_deadzone * 3 + 0.5)
+	u.hint('Deadzone: ~'..dzPct..'% do centro')
 
 	u.header('CURVA DE RESPOSTA')
 	gammaSlider('Steer Gamma', 'steer_gamma',
@@ -350,6 +354,9 @@ function M.draw()
 	u.header('SUAVIZAÇÃO')
 	u.cfgSlider('Steer Filter', 'steer_filter', 0.0, 10.0, '%.1f',
 		'0.0 = sem filtro | 6.0 = moderado | 8.0+ = lento')
+	u.cfgSlider('Reversal Limit', 'steer_reversal_limit', 0.5, 10.0, '%.1f',
+		'Limita a velocidade de inversão do volante.\n0.5 = volante muito solto | 2.5 = padrão | 10.0 = bem firme')
+	u.hint('Velocidade máxima de inversão do volante.')
 
 	u.header('SENSIBILIDADE POR VELOCIDADE')
 	u.cfgSlider('Steer Speed Scale', 'speed_sensi', 0.0, 10.0, '%.1f',

@@ -15,6 +15,7 @@ cfg.STEER_SENSI          = 65.0
 cfg.STEER_LIMIT          = 1.0
 cfg.STEER_GAMMA          = 1.0
 cfg.STEER_FILTER         = 0.0
+cfg.STEER_DEADZONE       = 0.0
 cfg.STEER_REVERSAL_LIMIT = 2.5
 cfg.SPEED_SENSI          = 1.0
 cfg.SPEED_SENSI_START    = 80
@@ -35,26 +36,32 @@ cfg.AUTOCLUTCH_ENABLED       = true
 cfg.AUTOCLUTCH_DEPTH         = 1.0
 cfg.AUTOCLUTCH_PRESS_SPEED   = 10.0
 cfg.AUTOCLUTCH_RELEASE_SPEED = 5.0
-cfg.ANTISTALL_ENABLED         = true
-cfg.ANTISTALL_FULL_SPEED      = 30.0
-cfg.ANTISTALL_MIN_SPEED       = 2.0
-cfg.ANTISTALL_ENGAGE_SPEED    = 1.8
-cfg.ANTISTALL_DISENGAGE_SPEED = 2.5
-cfg.ANTISTALL_GAMMA           = 1.0
-cfg.ANTISTALL_MAX_PRESS       = 1.0
-cfg.ANTISTALL_BITE_POINT      = 0.5
-cfg.ANTISTALL_TARGET_SMOOTH   = 0.92
-cfg.BLIP_ENABLED       = true
-cfg.BLIP_INTENSITY     = 1.5
-cfg.BLIP_DURATION      = 200
-cfg.BLIP_MIN_RPM_DIFF  = 200
-cfg.BLIP_ATTACK_SPEED  = 15.0
-cfg.BLIP_RELEASE_SPEED = 4.0
+	cfg.ANTISTALL_ENABLED         = true
+	cfg.ANTISTALL_FULL_SPEED      = 30.0
+	cfg.ANTISTALL_MIN_SPEED       = 2.0
+	cfg.ANTISTALL_ENGAGE_SPEED    = 1.8
+	cfg.ANTISTALL_DISENGAGE_SPEED = 2.5
+	cfg.ANTISTALL_GAMMA           = 1.2
+	cfg.ANTISTALL_MAX_PRESS       = 1.0
+	cfg.ANTISTALL_BITE_POINT      = 0.5
+	cfg.ANTISTALL_TARGET_SMOOTH   = 0.92
+	cfg.ANTISTALL_RPM_MARGIN      = 0.15
+	cfg.ANTISTALL_RPM_HYSTERESIS  = 0.05
+	cfg.ANTISTALL_REVERSE_SPEED   = 10.0
+	cfg.BLIP_ENABLED       = true
+	cfg.BLIP_MODE          = 0      -- 0=Automático (Gear Ratio), 1=Manual
+	cfg.BLIP_INTENSITY     = 10     -- UI 1-10  (físico: ×0.1)
+	cfg.BLIP_DURATION      = 300    -- UI 50-500 ms (1:1)
+	cfg.BLIP_SENSITIVITY   = 40     -- UI 1-100 (físico: ×50)
+	cfg.BLIP_MIN_RPM       = 1500   -- RPM mínimo absoluto para ativar blip
+	cfg.BLIP_ATTACK_SPEED  = 3      -- UI 1-10  (físico: ×5.0)
+	cfg.BLIP_RELEASE_SPEED = 1      -- UI 1-10  (físico: ×4.0)
 cfg.NLS_ENABLED       = true
 cfg.NLS_CUT_DURATION  = 150
 cfg.NLS_CUT_AMOUNT    = 0.2
 cfg.NLS_MIN_RPM       = 3000
 cfg.NLS_RELEASE_MULT  = 2.0
+cfg.NLS_ADAPTIVE_DURATION = true
 
 -- [SCROLL GAS]
 cfg.SCROLL_GAS_ENABLED        = false
@@ -66,32 +73,31 @@ cfg.SCROLL_GAS_INVERT         = false
 cfg.SCROLL_GAS_MODE           = 2
 cfg.SCROLL_GAS_GRADUAL        = false
 
--- [ABS] — valores internos de física (threshold e min_brake em escala real)
-cfg.ABS_ENABLED           = true
-cfg.ABS_LEVEL             = 15
-cfg.ABS_THRESHOLD         = 0.026   -- UI 26 × 0.001
-cfg.ABS_MIN_SPEED         = 14
-cfg.ABS_MIN_BRAKE         = 0.065   -- UI 65 × 0.001
-cfg.ABS_INTENSITY         = 0.44
-cfg.ABS_SMOOTH            = 3.0
-cfg.ABS_NDSLIP_DIV        = 2.6
-cfg.ABS_CURVE_FACTOR      = 5       -- inteiro 0-10, convertido em dss_abs.lua (/10)
-cfg.ABS_REAR_BIAS         = 6
-cfg.ABS_TRAIL_BRAKE       = 0
-cfg.ABS_TRAIL_BRAKE_START = 2
-cfg.ABS_BRAKE_RECOVERY    = 6
+-- [ABS] — valores em escala UI (inteiros)
+	cfg.ABS_ENABLED      = true
+	cfg.ABS_LEVEL        = 15
+	cfg.ABS_THRESHOLD    = 32     -- UI: 1-100   (interno: ×0.001)
+	cfg.ABS_MIN_SPEED    = 14
+	cfg.ABS_MIN_BRAKE    = 14     -- UI: 0-100   (interno: ×0.001)
+	cfg.ABS_INTENSITY    = 42     -- UI: 1-100   (interno: ×0.01)
+	cfg.ABS_SMOOTH       = 30     -- UI: 1-100   (interno: ×0.1)
+	cfg.ABS_NDSLIP_DIV   = 2.6
+	cfg.ABS_CURVE_FACTOR = 5      -- UI: 0-20    (interno: ×0.1)
+	cfg.ABS_TRAIL_BRAKE       = 0  -- UI: 0-10    (interno: /10)
+	cfg.ABS_TRAIL_BRAKE_START = 0  -- UI: 0-10    (interno: /10*0.9)
+	cfg.ABS_BRAKE_RECOVERY    = 0  -- UI: 0-100   (0=Smooth, >0=0.5+×0.05)
+	cfg.ABS_REAR_BIAS         = 0  -- UI: 0-10    (interno: /10)
 
 -- [TC]
-cfg.TC_ENABLED    = true
-cfg.TC_LEVEL      = 13
-cfg.TC_THRESHOLD  = 0.053
-cfg.TC_MIN_SPEED  = 10
-cfg.TC_MIN_GAS    = 0.51
-cfg.TC_INTENSITY  = 0.48
-cfg.TC_SMOOTH     = 3.1
-cfg.TC_NDSLIP_DIV       = 2.4
-cfg.TC_SLIP_RATIO_SCALE = 1.0
-cfg.TC_RECOVERY         = 8.0
+cfg.TC_ENABLED      = true
+cfg.TC_LEVEL        = 13
+cfg.TC_THRESHOLD    = 0.080   -- UI 40 × 0.002
+cfg.TC_MIN_SPEED    = 10
+cfg.TC_MIN_GAS      = 0.58    -- UI 58 × 0.01
+cfg.TC_INTENSITY    = 0.32    -- UI 32 × 0.01
+cfg.TC_SMOOTH       = 2.0     -- UI 20 × 0.1
+cfg.TC_NDSLIP_DIV   = 2.4     -- UI 24 × 0.1
+cfg.TC_CURVE_FACTOR = 0.3     -- UI 0-10  (físico: ×0.1)  relaxa threshold proporcional ao esterço
 cfg.LAUNCH_ENABLED  = false
 cfg.LAUNCH_RPM      = 4500
 cfg.LAUNCH_CUT_TIME = 200
@@ -112,30 +118,15 @@ cfg.KEY_TOGGLE_AUTOCLUTCH = 0
 -- ========================================================================
 -- TABELAS DE NÍVEIS
 -- ========================================================================
--- {threshold(interno), min_brake(interno), intensity, smooth,
---  rear_bias, trail_brake, trail_brake_start, brake_recovery, curve_factor(0-10)}
-
+-- {threshold, min_brake, intensity, smooth, trail_brake, trail_start, brake_recovery, rear_bias}
 local ABS_LEVELS = {
-	[1] ={0.100,0.005,0.02,0.3, 3,0,2,3,1},
-	[2] ={0.100,0.008,0.03,0.4, 3,0,2,3,1},
-	[3] ={0.090,0.010,0.04,0.4, 3,0,2,3,1},
-	[4] ={0.085,0.012,0.05,0.5, 3,0,2,4,2},
-	[5] ={0.080,0.015,0.06,0.5, 3,0,2,4,2},
-	[6] ={0.075,0.018,0.07,0.6, 4,0,2,4,2},
-	[7] ={0.070,0.022,0.09,0.7, 4,0,2,4,3},
-	[8] ={0.065,0.026,0.11,0.7, 4,0,2,5,3},
-	[9] ={0.060,0.030,0.13,0.8, 4,0,2,5,3},
-	[10]={0.055,0.035,0.16,0.9, 5,0,2,5,4},
-	[11]={0.050,0.040,0.20,1.0, 5,0,2,5,4},
-	[12]={0.044,0.045,0.26,1.5, 5,0,2,5,4},
-	[13]={0.038,0.050,0.32,2.0, 6,0,2,6,5},
-	[14]={0.032,0.060,0.38,2.5, 6,0,2,6,5},
-	[15]={0.026,0.065,0.44,3.0, 6,0,2,6,5},
-	[16]={0.021,0.072,0.52,3.3, 7,0,2,6,6},
-	[17]={0.016,0.078,0.60,3.6, 7,0,2,7,6},
-	[18]={0.012,0.084,0.70,4.0, 7,0,2,7,7},
-	[19]={0.008,0.090,0.82,4.5, 8,0,2,7,7},
-	[20]={0.004,0.096,0.95,5.0, 8,0,2,8,7},
+	[1] ={100,10, 2, 3, 0,0,0,0}, [2] ={100,10, 3, 4, 0,0,0,0}, [3] ={100,20, 4, 4, 0,0,0,0},
+	[4] ={100,20, 5, 5, 0,0,0,0}, [5] ={ 92,30, 6, 5, 0,0,0,0}, [6] ={ 84,30, 7, 6, 0,0,0,0},
+	[7] ={ 78,40, 8, 7, 0,0,0,0}, [8] ={ 72,40, 9, 7, 0,0,0,0}, [9] ={ 68,40, 9, 8, 0,0,0,0},
+	[10]={ 64,50,10, 9, 0,0,0,0}, [11]={ 60,50,10,10, 0,0,0,0}, [12]={ 52,80,18,15, 0,0,0,0},
+	[13]={ 44,100,26,20, 0,0,0,0},[14]={ 38,100,34,25, 0,0,0,0},[15]={ 32,100,42,30, 0,0,0,0},
+	[16]={ 26,100,50,33, 0,0,0,0},[17]={ 21,100,60,36, 0,0,0,0},[18]={ 16,100,70,40, 0,0,0,0},
+	[19]={ 10,100,82,45, 0,0,0,0},[20]={  5,100,95,50, 0,0,0,0},
 }
 
 function cfg.applyAbsLevel()
@@ -145,26 +136,25 @@ function cfg.applyAbsLevel()
 		cfg.ABS_MIN_BRAKE         = l[2]
 		cfg.ABS_INTENSITY         = l[3]
 		cfg.ABS_SMOOTH            = l[4]
-		cfg.ABS_REAR_BIAS         = l[5]
-		cfg.ABS_TRAIL_BRAKE       = l[6]
-		cfg.ABS_TRAIL_BRAKE_START = l[7]
-		cfg.ABS_BRAKE_RECOVERY    = l[8]
-		cfg.ABS_CURVE_FACTOR      = l[9]
+		cfg.ABS_TRAIL_BRAKE       = l[5]
+		cfg.ABS_TRAIL_BRAKE_START = l[6]
+		cfg.ABS_BRAKE_RECOVERY    = l[7]
+		cfg.ABS_REAR_BIAS         = l[8]
 	end
 end
 
+-- {TC_THRESHOLD, TC_MIN_GAS, TC_INTENSITY, TC_SMOOTH} — escala física (espelha cfg_data.TC_LEVEL_DATA × escala)
 local TC_LEVELS = {
-	[1]={0.100,0.92,0.04,0.4},[2]={0.085,0.85,0.08,0.6},[3]={0.065,0.78,0.14,0.9},
-	[4]={0.100,0.95,0.03,1.0},[5]={0.095,0.90,0.08,1.2},[6]={0.090,0.85,0.13,1.5},
-	[7]={0.085,0.80,0.18,1.7},[8]={0.079,0.76,0.23,1.9},[9]={0.074,0.71,0.28,2.2},
-	[10]={0.069,0.66,0.33,2.4},[11]={0.064,0.61,0.38,2.6},[12]={0.058,0.56,0.43,2.9},
-	[13]={0.053,0.51,0.48,3.1},[14]={0.048,0.46,0.53,3.3},[15]={0.043,0.41,0.58,3.6},
-	[16]={0.037,0.37,0.63,3.8},[17]={0.032,0.32,0.68,4.0},[18]={0.027,0.27,0.73,4.3},
-	[19]={0.022,0.22,0.78,4.5},[20]={0.016,0.17,0.83,4.7},[21]={0.011,0.12,0.88,5.0},
-	[22]={0.006,0.07,0.93,5.2},[23]={0.001,0.02,0.98,5.5},
+	[1] ={0.200,0.99,0.01,0.3}, [2] ={0.190,0.98,0.03,0.4}, [3] ={0.180,0.96,0.05,0.5},
+	[4] ={0.170,0.93,0.08,0.6}, [5] ={0.160,0.90,0.10,0.7}, [6] ={0.150,0.86,0.12,0.8},
+	[7] ={0.140,0.82,0.15,0.9}, [8] ={0.130,0.78,0.17,1.1}, [9] ={0.120,0.74,0.20,1.3},
+	[10]={0.110,0.70,0.22,1.4}, [11]={0.100,0.66,0.25,1.6}, [12]={0.090,0.62,0.28,1.8},
+	[13]={0.080,0.58,0.32,2.0}, [14]={0.070,0.54,0.36,2.2}, [15]={0.060,0.50,0.40,2.4},
+	[16]={0.050,0.46,0.45,2.6}, [17]={0.040,0.42,0.50,2.8}, [18]={0.030,0.38,0.55,3.0},
+	[19]={0.020,0.32,0.60,3.3}, [20]={0.010,0.26,0.65,3.6},
 }
 function cfg.applyTcLevel()
-	if cfg.TC_LEVEL >= 1 and cfg.TC_LEVEL <= 23 then
+	if cfg.TC_LEVEL >= 1 and cfg.TC_LEVEL <= 20 then
 		local l = TC_LEVELS[cfg.TC_LEVEL]
 		cfg.TC_THRESHOLD = l[1]; cfg.TC_MIN_GAS   = l[2]
 		cfg.TC_INTENSITY = l[3]; cfg.TC_SMOOTH    = l[4]
@@ -212,6 +202,8 @@ function cfg.loadConfig()
 	cfg.STEER_LIMIT  = clamp(getf("steer_limit",  10.0), 0.0, 10.0) * 0.1
 	cfg.STEER_GAMMA  = 0.5 + clamp(getf("steer_gamma", 5.0), 0.0, 10.0) * 0.1
 	cfg.STEER_FILTER = clamp(getf("steer_filter", 0.0),  0.0, 10.0) * 0.095
+	cfg.STEER_DEADZONE       = clamp(getf("steer_deadzone", 0.0), 0.0, 10.0) * 0.03
+	cfg.STEER_REVERSAL_LIMIT = clamp(getf("steer_reversal_limit", 2.5), 0.5, 10.0)
 	cfg.SPEED_SENSI       = clamp(getf("speed_sensi", 10.0), 0.0, 10.0) * 0.1
 	cfg.SPEED_SENSI_START = getf("speed_sensi_start", cfg.SPEED_SENSI_START)
 	cfg.SPEED_SENSI_END   = getf("speed_sensi_end",   cfg.SPEED_SENSI_END)
@@ -234,28 +226,43 @@ function cfg.loadConfig()
 	cfg.ANTISTALL_ENABLED         = getb("antistall_enabled",         cfg.ANTISTALL_ENABLED)
 	cfg.ANTISTALL_FULL_SPEED      = getf("antistall_full_speed",      cfg.ANTISTALL_FULL_SPEED)
 	cfg.ANTISTALL_MIN_SPEED       = getf("antistall_min_speed",       cfg.ANTISTALL_MIN_SPEED)
-	cfg.ANTISTALL_ENGAGE_SPEED    = getf("antistall_engage_speed",    cfg.ANTISTALL_ENGAGE_SPEED)
-	cfg.ANTISTALL_DISENGAGE_SPEED = getf("antistall_disengage_speed", cfg.ANTISTALL_DISENGAGE_SPEED)
+	cfg.ANTISTALL_ENGAGE_SPEED    = clamp(getf("antistall_engage_speed",    cfg.ANTISTALL_ENGAGE_SPEED),    0.5,  10.0)
+	cfg.ANTISTALL_DISENGAGE_SPEED = clamp(getf("antistall_disengage_speed", cfg.ANTISTALL_DISENGAGE_SPEED), 0.5,  10.0)
 	cfg.ANTISTALL_GAMMA           = getf("antistall_gamma",           cfg.ANTISTALL_GAMMA)
 	cfg.ANTISTALL_MAX_PRESS       = getf("antistall_max_press",       cfg.ANTISTALL_MAX_PRESS)
 	cfg.ANTISTALL_BITE_POINT      = getf("antistall_bite_point",      cfg.ANTISTALL_BITE_POINT)
 	cfg.ANTISTALL_TARGET_SMOOTH   = getf("antistall_target_smooth",   cfg.ANTISTALL_TARGET_SMOOTH)
+	cfg.ANTISTALL_RPM_MARGIN      = clamp(getf("antistall_rpm_margin",      cfg.ANTISTALL_RPM_MARGIN),      0.05, 0.50)
+	cfg.ANTISTALL_RPM_HYSTERESIS  = clamp(getf("antistall_rpm_hysteresis",  cfg.ANTISTALL_RPM_HYSTERESIS),  0.0,  0.20)
+	cfg.ANTISTALL_REVERSE_SPEED   = clamp(getf("antistall_reverse_speed",   cfg.ANTISTALL_REVERSE_SPEED),   0.5,  10.0)
 	if cfg.ANTISTALL_FULL_SPEED <= cfg.ANTISTALL_MIN_SPEED then cfg.ANTISTALL_FULL_SPEED = cfg.ANTISTALL_MIN_SPEED + 5.0 end
 	cfg.ANTISTALL_GAMMA         = clamp(cfg.ANTISTALL_GAMMA,         0.1,  10.0)
 	cfg.ANTISTALL_MAX_PRESS     = clamp(cfg.ANTISTALL_MAX_PRESS,     0.0,  1.0)
-	cfg.ANTISTALL_BITE_POINT    = clamp(cfg.ANTISTALL_BITE_POINT,    0.1,  0.9)
+	cfg.ANTISTALL_BITE_POINT    = clamp(cfg.ANTISTALL_BITE_POINT,    0.1,  1.0)
 	cfg.ANTISTALL_TARGET_SMOOTH = clamp(cfg.ANTISTALL_TARGET_SMOOTH, 0.0,  0.99)
 	cfg.NLS_ENABLED      = getb("nls_enabled",      cfg.NLS_ENABLED)
 	cfg.NLS_CUT_DURATION = clamp(getf("nls_cut_duration", cfg.NLS_CUT_DURATION), 50,   500)
 	cfg.NLS_CUT_AMOUNT   = clamp(getf("nls_cut_amount",   cfg.NLS_CUT_AMOUNT),   0.0,  1.0)
 	cfg.NLS_MIN_RPM      = clamp(getf("nls_min_rpm",      cfg.NLS_MIN_RPM),      1000, 9000)
-	cfg.NLS_RELEASE_MULT = clamp(getf("nls_release_mult", cfg.NLS_RELEASE_MULT), 0.5,  5.0)
+	cfg.NLS_RELEASE_MULT = clamp(getf("nls_release_mult", cfg.NLS_RELEASE_MULT), 1.0,  10.0)
+	cfg.NLS_ADAPTIVE_DURATION = getb("nls_adaptive_duration", cfg.NLS_ADAPTIVE_DURATION)
 	cfg.BLIP_ENABLED       = getb("blip_enabled",       cfg.BLIP_ENABLED)
-	cfg.BLIP_INTENSITY     = clamp(getf("blip_intensity",     cfg.BLIP_INTENSITY),     0.5,  3.0)
-	cfg.BLIP_DURATION      = clamp(getf("blip_duration",      cfg.BLIP_DURATION),      50,   500)
-	cfg.BLIP_MIN_RPM_DIFF  = clamp(getf("blip_min_rpm_diff",  cfg.BLIP_MIN_RPM_DIFF),  0,    2000)
-	cfg.BLIP_ATTACK_SPEED  = clamp(getf("blip_attack_speed",  cfg.BLIP_ATTACK_SPEED),  1.0,  50.0)
-	cfg.BLIP_RELEASE_SPEED = clamp(getf("blip_release_speed", cfg.BLIP_RELEASE_SPEED), 0.5,  30.0)
+	cfg.BLIP_MODE          = clamp(geti("blip_mode",          cfg.BLIP_MODE),          0,    1)
+	-- Conversão de valores antigos (float) para novos (inteiros)
+	local rawIntensity = getf("blip_intensity", cfg.BLIP_INTENSITY)
+	if rawIntensity < 1 then rawIntensity = math.floor(rawIntensity * 10 + 0.5) end
+	cfg.BLIP_INTENSITY     = clamp(rawIntensity, 1, 10)
+	cfg.BLIP_DURATION      = clamp(geti("blip_duration",      cfg.BLIP_DURATION),      50,   500)
+	local rawSensitivity = getf("blip_sensitivity", cfg.BLIP_SENSITIVITY)
+	if rawSensitivity > 100 then rawSensitivity = math.floor(rawSensitivity / 50 + 0.5) end
+	cfg.BLIP_SENSITIVITY   = clamp(rawSensitivity, 1, 100)
+	cfg.BLIP_MIN_RPM       = clamp(geti("blip_min_rpm",       cfg.BLIP_MIN_RPM),       500,  20000)
+	local rawAttack = getf("blip_attack_speed", cfg.BLIP_ATTACK_SPEED)
+	if rawAttack > 10 then rawAttack = math.floor(rawAttack / 5.0 + 0.5) end
+	cfg.BLIP_ATTACK_SPEED  = clamp(rawAttack, 1, 10)
+	local rawRelease = getf("blip_release_speed", cfg.BLIP_RELEASE_SPEED)
+	if rawRelease > 10 then rawRelease = math.floor(rawRelease / 4.0 + 0.5) end
+	cfg.BLIP_RELEASE_SPEED = clamp(rawRelease, 1, 10)
 	cfg.SCROLL_GAS_ENABLED        = getb("scroll_gas_enabled",        cfg.SCROLL_GAS_ENABLED)
 	cfg.SCROLL_GAS_STEP           = getf("scroll_gas_step",           cfg.SCROLL_GAS_STEP)
 	cfg.SCROLL_GAS_DECAY          = getf("scroll_gas_decay",          cfg.SCROLL_GAS_DECAY)
@@ -266,39 +273,35 @@ function cfg.loadConfig()
 	cfg.SCROLL_GAS_GRADUAL        = getb("scroll_gas_gradual",        cfg.SCROLL_GAS_GRADUAL)
 
 	-- [ABS]
-	cfg.ABS_ENABLED   = getb("abs_enabled",  cfg.ABS_ENABLED)
-	cfg.ABS_MIN_SPEED = getf("abs_min_speed", cfg.ABS_MIN_SPEED)
-	cfg.ABS_LEVEL     = geti("abs_level",     cfg.ABS_LEVEL)
-	cfg.ABS_NDSLIP_DIV = getf("abs_ndslip_div", cfg.ABS_NDSLIP_DIV)
-
+	cfg.ABS_ENABLED      = getb("abs_enabled",      cfg.ABS_ENABLED)
+	cfg.ABS_MIN_SPEED    = getf("abs_min_speed",    cfg.ABS_MIN_SPEED)
+	cfg.ABS_LEVEL        = geti("abs_level",        cfg.ABS_LEVEL)
+	cfg.ABS_NDSLIP_DIV   = getf("abs_ndslip_div",   cfg.ABS_NDSLIP_DIV)
+	cfg.ABS_CURVE_FACTOR = clamp(geti("abs_curve_factor", cfg.ABS_CURVE_FACTOR), 0, 20)
+	cfg.ABS_TRAIL_BRAKE       = clamp(geti("abs_trail_brake",       cfg.ABS_TRAIL_BRAKE),       0, 10)
+	cfg.ABS_TRAIL_BRAKE_START = clamp(geti("abs_trail_brake_start", cfg.ABS_TRAIL_BRAKE_START), 0, 10)
+	cfg.ABS_BRAKE_RECOVERY    = clamp(geti("abs_brake_recovery",    cfg.ABS_BRAKE_RECOVERY),    0, 100)
+	cfg.ABS_REAR_BIAS         = clamp(geti("abs_rear_bias",         cfg.ABS_REAR_BIAS),         0, 10)
 	if cfg.ABS_LEVEL == 0 then
-		-- Modo manual: lê da ini e converte para escala interna
-		cfg.ABS_THRESHOLD    = clamp(geti("abs_threshold", 26), 1,  100) * 0.001
-		cfg.ABS_MIN_BRAKE    = clamp(geti("abs_min_brake",  65), 0,  100) * 0.001
-		cfg.ABS_INTENSITY    = getf("abs_intensity", cfg.ABS_INTENSITY)
-		cfg.ABS_SMOOTH       = getf("abs_smooth",    cfg.ABS_SMOOTH)
-		cfg.ABS_CURVE_FACTOR = clamp(geti("abs_curve_factor", cfg.ABS_CURVE_FACTOR), 0, 10)
+		cfg.ABS_THRESHOLD = clamp(geti("abs_threshold", cfg.ABS_THRESHOLD), 1, 100)
+		cfg.ABS_MIN_BRAKE = clamp(geti("abs_min_brake", cfg.ABS_MIN_BRAKE), 0, 100)
+		cfg.ABS_INTENSITY = clamp(geti("abs_intensity", cfg.ABS_INTENSITY), 1, 100)
+		cfg.ABS_SMOOTH    = clamp(geti("abs_smooth",    cfg.ABS_SMOOTH),    1, 100)
 	else
 		cfg.applyAbsLevel()
 	end
-	-- Estes sempre lidos da ini (podem sobrescrever o preset)
-	cfg.ABS_REAR_BIAS         = clamp(geti("abs_rear_bias",         cfg.ABS_REAR_BIAS),         0, 10)
-	cfg.ABS_TRAIL_BRAKE       = clamp(geti("abs_trail_brake",       cfg.ABS_TRAIL_BRAKE),       0, 10)
-	cfg.ABS_TRAIL_BRAKE_START = clamp(geti("abs_trail_brake_start", cfg.ABS_TRAIL_BRAKE_START), 0, 10)
-	cfg.ABS_BRAKE_RECOVERY    = clamp(geti("abs_brake_recovery",    cfg.ABS_BRAKE_RECOVERY),    0, 10)
 
 	-- [TC]
 	cfg.TC_ENABLED   = getb("tc_enabled",  cfg.TC_ENABLED)
 	cfg.TC_MIN_SPEED = clamp(geti("tc_min_speed", 10), 0, 100)
-	cfg.TC_LEVEL     = geti("tc_level",    cfg.TC_LEVEL)
-	cfg.TC_NDSLIP_DIV       = clamp(geti("tc_ndslip_div",        24), 10, 50) * 0.1
-	cfg.TC_SLIP_RATIO_SCALE = clamp(geti("tc_slip_ratio_scale",   5),  0, 10) * 0.2
-	cfg.TC_RECOVERY         = clamp(geti("tc_recovery",          80),  1,150) * 0.1
+	cfg.TC_LEVEL     = clamp(geti("tc_level", cfg.TC_LEVEL), 0, 20)
+	cfg.TC_NDSLIP_DIV   = clamp(geti("tc_ndslip_div",   24), 10, 50) * 0.1
+	cfg.TC_CURVE_FACTOR = clamp(geti("tc_curve_factor",  3),  0,  10) * 0.1
 	if cfg.TC_LEVEL == 0 then
-		cfg.TC_THRESHOLD = clamp(geti("tc_threshold", 53), 0, 100) * 0.001
-		cfg.TC_MIN_GAS   = clamp(geti("tc_min_gas",   51), 0, 100) * 0.01
-		cfg.TC_INTENSITY = clamp(geti("tc_intensity", 48), 1, 100) * 0.01
-		cfg.TC_SMOOTH    = clamp(geti("tc_smooth",    31), 1, 100) * 0.1
+		cfg.TC_THRESHOLD = clamp(geti("tc_threshold", 40), 0, 100) * 0.002
+		cfg.TC_MIN_GAS   = clamp(geti("tc_min_gas",   58), 0, 100) * 0.01
+		cfg.TC_INTENSITY = clamp(geti("tc_intensity", 32), 1, 100) * 0.01
+		cfg.TC_SMOOTH    = clamp(geti("tc_smooth",    20), 1, 100) * 0.1
 	else cfg.applyTcLevel() end
 	cfg.LAUNCH_ENABLED  = getb("launch_enabled",  cfg.LAUNCH_ENABLED)
 	cfg.LAUNCH_RPM      = clamp(getf("launch_rpm",      cfg.LAUNCH_RPM),      1000, 20000)

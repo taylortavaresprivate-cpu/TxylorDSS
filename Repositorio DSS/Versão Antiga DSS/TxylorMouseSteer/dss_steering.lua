@@ -11,8 +11,7 @@ local steering = {}
 steering.steerAngle    = 0
 steering.steerVelocity = 0
 
-local filteredSteer  = 0
-local prevSteerAngle = 0
+local filteredSteer = 0
 
 function steering.update(dt, data, ui)
 	local tyreSpeed0 = car.wheels[0].angularSpeed * car.wheels[0].tyreRadius
@@ -20,21 +19,8 @@ function steering.update(dt, data, ui)
 	local isDrive    = math.min(data.speedKmh / 36, 1)
 	local isForward  = math.clamp(tyreSpeed0 + tyreSpeed1, 0, 10) / 10
 
-	-- Posição normalizada do mouse (-1 a 1)
-	local mouseRaw = (ui.mousePos.x - ui.windowSize.x / 2) / ui.windowSize.x * 2
-	local mouseSteer = mouseRaw * cfg.STEER_LIMIT
-
-	-- Deadzone de mouse: zona morta no centro
-	if cfg.STEER_DEADZONE > 0 then
-		local absSteer = math.abs(mouseSteer)
-		if absSteer < cfg.STEER_DEADZONE then
-			mouseSteer = 0
-		else
-			-- Remapeia suavemente: remove a deadzone e reescala para [-1, 1]
-			local sign = mouseSteer >= 0 and 1 or -1
-			mouseSteer = sign * (absSteer - cfg.STEER_DEADZONE) / (1.0 - cfg.STEER_DEADZONE)
-		end
-	end
+	local mouseSteer = (ui.mousePos.x - ui.windowSize.x / 2) / ui.windowSize.x * 2
+	mouseSteer = mouseSteer * cfg.STEER_LIMIT
 
 	local sign = mouseSteer >= 0 and 1 or -1
 	mouseSteer = sign * math.pow(math.abs(mouseSteer), cfg.STEER_GAMMA)
@@ -48,27 +34,13 @@ function steering.update(dt, data, ui)
 		end
 	end
 
-	local steerRate = (steering.steerAngle - prevSteerAngle) / math.max(dt, 1e-4)
-
 	if cfg.FFB_ENABLED then
 		local velocityAngle = math.atan2(car.localVelocity.x, car.localVelocity.z)
 			/ (math.pi / 2) * isDrive * isForward
 		local effVelocityAngle = math.clamp(velocityAngle, -cfg.STEER_COUNTER_STEER, cfg.STEER_COUNTER_STEER)
-
-		local rawFfb   = data.ffb * cfg.FFB_GAIN
-		local ffbSign  = rawFfb >= 0 and 1 or -1
-		local ffbForce = ffbSign * math.pow(math.abs(rawFfb) + 1e-9, cfg.FFB_GAMMA)
-
-		local totalSpeed   = math.max(math.sqrt(car.localVelocity.x^2 + car.localVelocity.z^2), 0.1)
-		local lateralForce = (car.localVelocity.x / totalSpeed) * cfg.FFB_LATERAL * isDrive * isForward
-
-		local damperForce = steerRate * cfg.FFB_DAMPER
-
 		steering.steerVelocity = (mouseSteer - effVelocityAngle - steering.steerAngle) * effSensi
-			- ffbForce
+			- data.ffb * cfg.FFB_GAIN
 			+ data.localAngularVelocity.y * cfg.GYRO_GAIN * isForward
-			- lateralForce
-			- damperForce
 	else
 		steering.steerVelocity = (mouseSteer - steering.steerAngle) * effSensi
 	end
@@ -85,19 +57,12 @@ function steering.update(dt, data, ui)
 	local rawSteer = math.clamp(steering.steerAngle + steerDelta, -1, 1)
 
 	if cfg.STEER_FILTER > 0 then
-		filteredSteer       = filteredSteer * cfg.STEER_FILTER + rawSteer * (1 - cfg.STEER_FILTER)
-		steering.steerAngle = filteredSteer
+		filteredSteer        = filteredSteer * cfg.STEER_FILTER + rawSteer * (1 - cfg.STEER_FILTER)
+		steering.steerAngle  = filteredSteer
 	else
-		steering.steerAngle = rawSteer
-		filteredSteer       = rawSteer
+		steering.steerAngle  = rawSteer
+		filteredSteer        = rawSteer
 	end
-
-	prevSteerAngle = steering.steerAngle
-
-	-- Exporta para o monitor em tempo real (lido pelo TxylorConfig)
-	ac.store('dss_steer_angle', steering.steerAngle)
-	ac.store('dss_mouse_steer', math.clamp(mouseSteer, -1, 1))
-	ac.store('dss_ffb_raw',     math.clamp(data.ffb, -1, 1))
 end
 
 function steering.sanitize(data)
@@ -105,7 +70,6 @@ function steering.sanitize(data)
 		steering.steerAngle    = 0
 		steering.steerVelocity = 0
 		filteredSteer          = 0
-		prevSteerAngle         = 0
 	end
 	data.steer = steering.steerAngle
 end

@@ -62,24 +62,6 @@ function M.cfgSlider(label, key, vmin, vmax, fmt, tooltip)
 	end
 end
 
--- ⚠️ FIX: CSP ui.slider não suporta '%d' — usa '%.0f' que exibe inteiro sem casas decimais
-function M.cfgSliderInt(label, key, vmin, vmax, tooltip)
-	ui.setNextItemWidth(M.getSliderWidth())
-	local newVal = ui.slider('##'..key, cfg[key], vmin, vmax, label..':  %.0f')
-	if ui.itemEdited() then cfg[key] = math.floor(newVal + 0.5); data.dirty = true end
-	if cfg[key] ~= defaults[key] then
-		ui.sameLine(0, 4)
-		ui.pushStyleColor(ui.StyleColor.Text, M.colChanged); ui.text('●'); ui.popStyleColor()
-	end
-	if tooltip then
-		ui.sameLine(0, 4)
-		ui.pushStyleColor(ui.StyleColor.Text, M.getColAccent())
-		ui.text('?')
-		ui.popStyleColor()
-		if ui.itemHovered() then ui.setTooltip(tooltip) end
-	end
-end
-
 function M.cfgCheckbox(label, key)
 	if ui.checkbox(label, cfg[key]) then cfg[key] = not cfg[key]; data.dirty = true end
 end
@@ -107,40 +89,21 @@ function M.info(text)
 	ui.popStyleColor()
 end
 
-function M.levelSelector(id, level, maxLevel, names, levelData, labelColor, descriptions)
+function M.levelSelector(id, level, maxLevel, names, levelData, labelColor)
 	ui.offsetCursorY(2)
 	local levelLabel = level==0 and '  Manual  '
-		or ('  '..level..'/'..maxLevel..'  ')
+		or ('  '..level..'/'..maxLevel..' — '..names[level]..'  ')
 	if ui.button('◄##'..id..'down', vec2(28,0)) then level = math.max(0, level-1) end
 	ui.sameLine(0,6)
 	ui.pushStyleColor(ui.StyleColor.Text, labelColor); ui.text(levelLabel); ui.popStyleColor()
 	ui.sameLine(0,6)
 	if ui.button('►##'..id..'up', vec2(28,0)) then level = math.min(maxLevel, level+1) end
-	-- Nome do preset ao lado, em destaque (somente se for descritivo, não apenas o número)
-	if level >= 1 and level <= maxLevel and names and names[level]
-	   and names[level] ~= tostring(level) then
-		ui.sameLine(0, 10)
-		ui.pushStyleColor(ui.StyleColor.Text, M.colWhite); ui.text(names[level]); ui.popStyleColor()
-	end
 	ui.offsetCursorY(4)
 	if level >= 1 and level <= maxLevel then
-		if descriptions and descriptions[level] then
-			M.hint(descriptions[level])
-		else
-			local l = levelData[level]
-			if id == 'abs' then
-				-- ABS: 8 valores (threshold, min_brake, intensity, smooth, trail_brake, trail_start, brake_recovery, rear_bias)
-				M.hint(string.format('Threshold: %d   Freio mín: %d   Intensidade: %d   Smooth: %d',
-					l[1], l[2], l[3], l[4]))
-				M.hint(string.format('Trail: %d   Start: %d   Recovery: %d   Rear Bias: %d',
-					l[5], l[6], l[7], l[8]))
-			else
-				-- TC: 4 valores
-				M.hint(string.format('Threshold: %d   Gás mín: %d', l[1], l[2]))
-				M.hint(string.format('Intensidade: %d   Smooth: %d', l[3], l[4]))
-			end
-		end
-		ui.offsetCursorY(2); M.hint('Selecione Manual (0) para ajuste individual.')
+		local l = levelData[level]
+		M.hint(string.format('Threshold: %.3f   Min: %.2f', l[1], l[2]))
+		M.hint(string.format('Intensidade: %.2f  Smooth: %.1f', l[3], l[4]))
+		ui.offsetCursorY(4); M.hint('Selecione Manual (0) para ajuste individual.')
 	else
 		M.hint('Modo manual — utilize os controles abaixo.')
 	end
@@ -165,75 +128,69 @@ function M.drawLogo()
 end
 
 -- ========================================================================
--- TAB BAR — grid 3×3 (9 tabs)
+-- TAB BAR
 -- ========================================================================
 
 M.currentTab = 0
 
 local TAB_NAMES = {
-	[0] = 'DIREÇÃO',    [1] = 'PEDAIS',     [2] = 'ABS SYSTEM',
-	[3] = 'TC SYSTEM',  [4] = 'TRANSMISSÃO',[5] = 'EXTRAS',
-	[6] = 'KEYBINDS',   [7] = 'PRESETS',    [8] = 'SOBRE',
+	[0] = 'DIREÇÃO',    [1] = 'PEDAIS',     [2] = 'ABS SYSTEM',  [3] = 'TC SYSTEM',
+	[4] = 'TRANSMISSÃO',[5] = 'EXTRAS',     [6] = 'PRESETS',     [7] = 'SOBRE',
 }
-
-local COLS = 3
-local ROWS = 3
 
 function M.drawTabBar()
 	local winW = M.getWindowWidth() - 16
-	local tabW = math.floor(winW / COLS)
+	local tabW = math.floor(winW / 4)
 	local tabH = 24
 
-	local colTabBg      = rgbm(0.15, 0.15, 0.15, 1)
-	local colTabActive  = M.getColHeader()
-	local colTabHover   = rgbm(0.25, 0.25, 0.25, 1)
-	local colTabText    = rgbm(0.85, 0.85, 0.85, 1)
-	local colTabTextAct = rgbm(1, 1, 1, 1)
+	local colTabBg       = rgbm(0.15, 0.15, 0.15, 1)
+	local colTabActive   = M.getColHeader()
+	local colTabHover    = rgbm(0.25, 0.25, 0.25, 1)
+	local colTabText     = rgbm(0.85, 0.85, 0.85, 1)
+	local colTabTextAct  = rgbm(1, 1, 1, 1)
 
 	local startCursor = ui.getCursor()
 
-	for row = 0, ROWS - 1 do
-		for col = 0, COLS - 1 do
-			local tabIdx = row * COLS + col
-			if TAB_NAMES[tabIdx] then
-				local x = col * tabW
-				local y = row * (tabH + 2)
-				local p1 = startCursor + vec2(x, y)
-				local p2 = p1 + vec2(tabW - 2, tabH)
+	for row = 0, 1 do
+		for col = 0, 3 do
+			local tabIdx = row * 4 + col
+			local x = col * tabW
+			local y = row * (tabH + 2)
+			local p1 = startCursor + vec2(x, y)
+			local p2 = p1 + vec2(tabW - 2, tabH)
 
-				local isActive  = (M.currentTab == tabIdx)
-				local isHovered = ui.rectHovered(p1, p2)
+			local isActive  = (M.currentTab == tabIdx)
+			local isHovered = ui.rectHovered(p1, p2)
 
-				if isActive then
-					ui.drawRectFilled(p1, p2, colTabActive)
-				elseif isHovered then
-					ui.drawRectFilled(p1, p2, colTabHover)
-				else
-					ui.drawRectFilled(p1, p2, colTabBg)
-				end
+			if isActive then
+				ui.drawRectFilled(p1, p2, colTabActive)
+			elseif isHovered then
+				ui.drawRectFilled(p1, p2, colTabHover)
+			else
+				ui.drawRectFilled(p1, p2, colTabBg)
+			end
 
-				if isActive then
-					ui.drawLine(vec2(p1.x, p2.y), p2, colTabActive, 2)
-				end
+			if isActive then
+				ui.drawLine(vec2(p1.x, p2.y), p2, colTabActive, 2)
+			end
 
-				local name      = TAB_NAMES[tabIdx]
-				local textColor = isActive and colTabTextAct or colTabText
-				local textSize  = ui.measureText(name)
-				local textPos   = p1 + vec2((tabW - 2 - textSize.x) / 2, (tabH - textSize.y) / 2)
+			local name = TAB_NAMES[tabIdx]
+			local textColor = isActive and colTabTextAct or colTabText
+			local textSize = ui.measureText(name)
+			local textPos = p1 + vec2((tabW - 2 - textSize.x) / 2, (tabH - textSize.y) / 2)
 
-				ui.setCursor(textPos)
-				ui.pushStyleColor(ui.StyleColor.Text, textColor)
-				ui.text(name)
-				ui.popStyleColor()
+			ui.setCursor(textPos)
+			ui.pushStyleColor(ui.StyleColor.Text, textColor)
+			ui.text(name)
+			ui.popStyleColor()
 
-				if isHovered and ui.mouseClicked(0) then
-					M.currentTab = tabIdx
-				end
+			if isHovered and ui.mouseClicked(0) then
+				M.currentTab = tabIdx
 			end
 		end
 	end
 
-	ui.setCursor(startCursor + vec2(0, ROWS * (tabH + 2) + 4))
+	ui.setCursor(startCursor + vec2(0, 2 * (tabH + 2) + 4))
 end
 
 return M
