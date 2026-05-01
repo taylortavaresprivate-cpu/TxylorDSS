@@ -13,7 +13,7 @@ Repositorio DSS/
 ├── TxylorMouseSteer/        ← Script de gameplay (roda todo frame)
 │   ├── assist.lua           ← Entry point / orquestrador do loop principal
 │   ├── dss_config.lua       ← Defaults, tabelas de níveis, loadConfig() com transforms
-│   ├── dss_steering.lua     ← Algoritmo mouse→steer + FFB + gyro + speed sensi
+│   ├── dss_steering.lua     ← Algoritmo mouse→steer + FFB + gyro + speed sensi + deadzone
 │   ├── dss_abs.lua          ← Simulação ABS slip-based (curve factor, trail brake, rear bias)
 │   ├── dss_tc.lua           ← Controle de tração com detecção FWD/RWD/AWD
 │   ├── dss_pedals.lua       ← Rampa de gás/freio/embreagem/freio-de-mão + Scroll Gas
@@ -22,7 +22,7 @@ Repositorio DSS/
 │   ├── dss_nls.lua          ← No-Lift Shift (power cut em upshifts)
 │   ├── dss_launch.lua       ← Launch control com cut de RPM
 │   ├── dss_cruise.lua       ← Cruise control / speed limiter
-│   ├── dss_keybinds.lua     ← Hotkeys configuráveis (toggles de sistemas)
+│   ├── dss_keybinds.lua     ← Hotkeys configuráveis (toggles de sistemas + FFB gain +/-)
 │   └── manifest.ini         ← Metadados do script (v1.0)
 └── TxylorConfig/            ← App de UI in-game
     ├── TxylorConfig.lua     ← Entry point / roteador de abas / auto-load / debounce save
@@ -30,17 +30,17 @@ Repositorio DSS/
     ├── cfg_io.lua           ← Leitura/escrita config.ini + presets + migração formatos
     ├── cfg_ui.lua           ← Helpers de UI compartilhados (cores, widgets, tab bar 3×3)
     ├── config.ini           ← Arquivo de config compartilhado
-    ├── manifest.ini         ← Metadados da app (v6.1.0, window 530×450)
+    ├── manifest.ini         ← Metadados da app (v6.2.0, window 530×450)
     ├── logo_dss.png         ← Branding
     ├── fonts/               ← Fontes personalizadas
     └── tab_*.lua            ← Uma aba da interface por arquivo
-        ├── tab_direcao.lua  ← Steering (FFB, gamma curve, monitor em tempo real)
+        ├── tab_direcao.lua  ← Steering (FFB, gamma curve, monitor, deadzone, presets)
         ├── tab_pedais.lua   ← Pedals (press/release/max para gas/brake/clutch/handbrake)
         ├── tab_abs.lua      ← ABS (20 níveis + manual, curve factor, trail brake, recovery)
         ├── tab_tc.lua       ← TC (20 níveis com nomes descritivos, monitor inline, drivetrain)
         ├── tab_transmissao.lua ← Transmission (AutoClutch, AntiStall, Blip, NLS)
         ├── tab_extras.lua   ← Extras (Scroll Gas 3 modos, Cruise, Launch Control)
-        ├── tab_keybinds.lua ← Keybinds (captura de teclas, VK codes)
+        ├── tab_keybinds.lua ← Keybinds (captura de teclas, VK codes, FFB gain +/-)
         ├── tab_presets.lua  ← Preset manager (save/load/delete, auto-load por car_id)
         └── tab_sobre.lua    ← About + personalização de cores da UI
 ```
@@ -66,8 +66,8 @@ Ambos os módulos (script e app) lêem/escrevem `config.ini`, mas com convençõ
 script.update(dt) a cada frame
   ├─ tc.detectDrivetrain()              ← Detecta FWD/RWD/AWD uma vez por sessão
   ├─ config hot-reload (se configTimer >= 1s)
-  ├─ keybinds.update(dt)                ← Toggles ABS, TC, Launch, Cruise, AutoClutch
-  ├─ teclas N, +/-, M                   ← Toggle mouse, FFB gain, keyboard mode
+  ├─ keybinds.update(dt)                ← Toggles ABS, TC, Launch, Cruise, AutoClutch + FFB Gain +/-
+  ├─ teclas N, M                        ← Toggle mouse, keyboard mode
   ├─ GAS INPUT
   │  └─ pedals.updateGas(dt, gasTarget, ui)   ← Scroll Gas incluso
   ├─ GAS PIPELINE (ORDEM FIXA):
@@ -132,6 +132,8 @@ Muitos valores no `.ini` estão em escala "UI" e são transformados ao carregar:
 | `steer_limit` | 0–10 | × 0.1 | `cfg.STEER_LIMIT` |
 | `steer_gamma` | 0–10 | 0.5 + × 0.1 | `cfg.STEER_GAMMA` |
 | `steer_filter` | 0–10 | × 0.095 | `cfg.STEER_FILTER` |
+| `steer_deadzone` | 0–10 | × 0.03 | `cfg.STEER_DEADZONE` |
+| `steer_reversal_limit` | 0.5–10 | 1:1 | `cfg.STEER_REVERSAL_LIMIT` |
 | `speed_sensi` | 0–10 | × 0.1 | `cfg.SPEED_SENSI` |
 | `abs_threshold` | 1–100 int | × 0.001 | `cfg.ABS_THRESHOLD` |
 | `abs_min_brake` | 0–100 int | × 0.001 | `cfg.ABS_MIN_BRAKE` |
@@ -187,9 +189,10 @@ A UI exibe **nomes descritivos** em português:
 ### 5.1 `dss_steering.lua`
 
 - **Mouse steering**: posição normalizada do mouse (-1 a 1), aplicando `STEER_LIMIT` e `STEER_GAMMA`
+- **Deadzone**: zona morta no centro do mouse (`STEER_DEADZONE`). Quando o valor absoluto do steer está abaixo do threshold, é remapeado suavemente para 0 e depois reescalado para o range completo
 - **Speed sensitivity**: reduz `STEER_SENSI` entre `SPEED_SENSI_START` e `SPEED_SENSI_END`
 - **FFB**: combina `data.ffb * FFB_GAIN`, `FFB_GAMMA`, contra-esterço (`STEER_COUNTER_STEER`), força lateral (`FFB_LATERAL`), damper (`FFB_DAMPER`), e gyro (`GYRO_GAIN * localAngularVelocity.y`)
-- **Steer reversal limit**: limita a velocidade de reversão do volante
+- **Steer reversal limit**: limita a velocidade de reversão do volante (`STEER_REVERSAL_LIMIT`). Quando o volante cruza o centro (troca de sinal), o delta é clampado por frame, criando uma sensação de "peso" ao inverter a direção
 - **Filter**: suavização exponencial quando `STEER_FILTER > 0`
 - **Exporta**: `dss_steer_angle`, `dss_mouse_steer`, `dss_ffb_raw`
 
@@ -293,7 +296,8 @@ A UI exibe **nomes descritivos** em português:
 
 - Toggles de sistemas via teclas configuráveis (VK codes)
 - Sistemas toggláveis: ABS, TC, Launch, Cruise, AutoClutch
-- Usa detecção `justPressed` (edge trigger)
+- **FFB Gain +/-**: ajusta `cfg.FFB_GAIN` em ±0.1 por pressão (range 0.0–10.0), com mensagem no jogo
+- Usa detecção `justPressed` (edge trigger) — não repete se segurar a tecla
 
 ---
 
@@ -335,10 +339,20 @@ A UI exibe **nomes descritivos** em português:
 
 ### 6.4 `tab_direcao.lua`
 
-- Monitor em tempo real com barras (Mouse, Steer, FFB)
-- Gráfico de linha histórico (120 amostras, ~30fps)
-- Funciona em **replay** (usa `ac.getCar(0)`), mas Mouse só em jogo
-- Overlays de gamma: gráficos de curva para `steer_gamma` e `ffb_gamma`
+- **Monitor em tempo real** com barras (Mouse, Steer, FFB)
+  - Funciona em **replay** (usa `ac.getCar(0)`), mas Mouse só em jogo (via `ac.load`)
+  - **Indicador de clipping**: barra fica vermelha quando o valor atinge ≥98% do range (mouse, steer ou FFB)
+  - Gráfico de linha histórico (120 amostras, ~30fps)
+- **Sliders de direção**: FFB Gain, Gyro Gain, Steer Align, FFB Damper, FFB Lateral, Steer Sensi, Steer Limit, Steer Deadzone, Steer Gamma, Steer Filter, Reversal Limit, Speed Sensi
+- **Overlays de gamma**: gráficos de curva para `steer_gamma` e `ffb_gamma` (botão "~" ao lado do slider)
+- **Presets de direção** (6 botões, 3 por linha):
+  - 💨 **Drift** — Sensi alta, counter-steer forte
+  - 🏔️ **Touge** — Sensi média-alta, FFB firme
+  - 🏁 **Circuito** — Setup balanceado
+  - 🌲 **Rally** — Sensi alta, FFB forte
+  - 🏎️ **Formula** — Sensi baixa, FFB preciso
+  - 🏎 **Kart** — Sensi alta, limit baixo
+  - Cada preset aplica 12 parâmetros de uma vez
 - Botão "⊙ Monitor" toggle
 
 ### 6.5 `tab_tc.lua`
@@ -383,6 +397,10 @@ A UI exibe **nomes descritivos** em português:
 - Tabela de VK codes → nomes legíveis (A-Z, 0-9, F1-F12, Num0-Num9, setas, etc.)
 - Teclas scaneáveis filtradas
 - Botão "x" para limpar (setar para 0)
+- **Seções organizadas**:
+  - **Controles Diretos**: Embreagem Manual, Freio de Mão (segurar para ativar)
+  - **Toggles**: ABS, TC, Launch Control, Cruise Control, AutoClutch
+  - **Direção**: FFB Gain +, FFB Gain - (ajuste em tempo real durante pilotagem)
 
 ---
 
@@ -401,14 +419,12 @@ A UI exibe **nomes descritivos** em português:
 | Tecla | Função |
 |---|---|
 | **N** | Toggle mouse steering on/off |
-| **+** (=) | Aumenta FFB Gain em 0.1 |
-| **-** | Diminui FFB Gain em 0.1 |
 | **M** | Cicla modo: Mouse → Teclado → Híbrido |
 | **E / Botão 6** | Marcha para cima |
 | **Q / Botão 5** | Marcha para baixo |
-| **C** (padrão) | Embreagem manual (`KEY_CLUTCH`) |
-| **Space** (padrão) | Freio de mão (`KEY_HANDBRAKE`) |
 | **X** | Arm Launch Control (só quando parado) |
+
+**Nota:** FFB Gain (+/-), ABS, TC, Launch, Cruise e AutoClutch agora são **configuráveis via tab_keybinds.lua** — não são mais hardcoded.
 
 ---
 
@@ -440,4 +456,23 @@ Convenções:
 
 ---
 
-*Documento gerado em análise completa do código-fonte. Última atualização: 29/04/2026.*
+## 11. Features Experimentais (Revertidas)
+
+Durante o desenvolvimento, as seguintes features foram implementadas e posteriormente **removidas** por não apresentarem diferença perceptível na prática:
+
+### 11.1 Center Spring + FFB Smooth
+
+- **Center Spring**: força que puxa o volante pro centro, independente do FFB. Útil teoricamente quando FFB está fraco, mas na prática não foi perceptível.
+- **FFB Smooth**: filtro passa-baixa no sinal FFB bruto antes do processamento. Teoricamente suavizaria oscilações rápidas, mas o efeito foi imperceptível comparado ao `STEER_FILTER` já existente.
+- **Motivo da remoção**: os 3 primeiros ajustes da aba Direção (Steer Filter, FFB Damper, FFB Gamma) já cobrem bem o comportamento desejado. Complexidade adicional sem ganho real.
+
+### 11.2 Road Feel
+
+- **Conceito**: vibração de textura da pista baseada em `suspensionTravel * angularSpeed` das 4 rodas, com suavização e clamping.
+- **Motivo da remoção**: efeito imperceptível em testes práticos. O sistema FFB já existente (Damper, Lateral, Gyro) já transmite informação de pista suficiente.
+
+> **Lição**: nem toda feature técnica se traduz em experiência perceptível. Testar sempre antes de manter.
+
+---
+
+*Documento gerado em análise completa do código-fonte. Última atualização: 30/04/2026.*
